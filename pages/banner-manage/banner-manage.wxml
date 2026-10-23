@@ -1,0 +1,9 @@
+<view class="page {{pageVisible ? '' : 'motion-paused'}} {{motionSettled ? 'motion-settled' : ''}} theme-{{theme}} {{reduce ? 'reduce-motion' : ''}} page-enter">
+  <nav-bar title="" />
+  <view class="gallery-head"><view class="eyebrow">食帖陈列 · 首页影像</view><view class="gallery-title">让好味，先入眼。</view><view class="gallery-head__foot"><text>海报墙</text><text class="gallery-count num">{{banners.length}} / {{max}}</text></view></view>
+  <view class="gallery-note"><view class="gallery-note__mark">展</view><view><view class="gallery-note__title">今日灶火的第一眼</view><view class="gallery-note__text">上传的海报优先呈现；留白时，最近有图的菜品会自动上台。最多 {{max}} 张。</view></view></view>
+  <view class="banner-grid" wx:if="{{!loading}}"><view class="poster" wx:for="{{banners}}" wx:key="_id"><view class="poster__image-wrap"><image class="poster__img" src="{{item.fileID}}" mode="aspectFill" data-index="{{index}}" bindtap="onPreviewTap" /><view class="poster__remove" data-index="{{index}}" catchtap="onDeleteTap" aria-label="删除此幅海报"><view class="poster__remove-glyph">×</view></view></view><view class="poster__caption"><text class="poster__index num">{{index < 9 ? '0' : ''}}{{index + 1}}</text><text>今日灶火 · 点击预览</text></view></view><view class="poster-add" wx:if="{{banners.length < max}}" hover-class="control--press" hover-stay-time="60" bindtap="onAddTap"><view class="poster-add__plus">＋</view><view class="poster-add__text">添一幅海报</view><text class="poster-add__sub">为食帖添一抹风味</text></view></view>
+  <view class="skeleton-grid" wx:if="{{loading}}"><view class="skeleton sk-poster" wx:for="{{[1,2]}}" wx:key="*this"></view></view>
+  <view class="gallery-empty" wx:if="{{!loading && !banners.length}}">此处留白，最近菜品也会自然呈现。</view>
+  <view class="clear" wx:if="{{banners.length}}" hover-class="control--press" hover-stay-time="60" bindtap="onClearAllTap">清空全部自定义海报</view>
+</view>

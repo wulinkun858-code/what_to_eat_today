@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "档案",
+  "usingComponents": {
+    "theme-reveal": "/components/theme-reveal/index"
+  },
+  "navigationStyle": "custom"
+}

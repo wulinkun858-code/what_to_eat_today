@@ -1,0 +1,301 @@
+/* styles/base.wxss */
+/* ============================================================================
+   基础层：reset、页面容器、排版、动效基元
+   ----------------------------------------------------------------------------
+   只放"与业务无关"的规则。任何带具体页面语义的样式都不应写在这里。
+   ============================================================================ */
+
+page {
+  background-color: var(--bg);
+  color: var(--ink);
+  font-size: var(--fs-body);
+  line-height: var(--lh-normal);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+view,
+text,
+input,
+textarea,
+button,
+scroll-view,
+swiper,
+swiper-item {
+  box-sizing: border-box;
+}
+
+.page {
+  min-height: 100vh;
+  background-color: var(--bg);
+  background-image: linear-gradient(155deg, var(--accent-soft), transparent 36%), url("/assets/textures/paper-grain.png");
+  background-repeat: repeat;
+  background-size: 100% 100%, 240rpx 240rpx;
+  color: var(--ink);
+}
+
+/* ============================================================================
+   排版
+   ============================================================================ */
+
+.serif,
+.display,
+.h1,
+.h2,
+.bookband__title,
+.seal,
+.slip__title {
+  font-family: var(--font-display);
+}
+
+.display {
+  font-size: var(--fs-display);
+  line-height: var(--lh-tight);
+  font-weight: 600;
+  letter-spacing: 1rpx;
+  color: var(--ink);
+}
+
+.h1 {
+  font-size: var(--fs-h1);
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+  color: var(--ink);
+}
+
+.h2 {
+  font-size: var(--fs-h2);
+  line-height: 1.35;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+  color: var(--ink);
+}
+
+.body {
+  font-size: var(--fs-body);
+  line-height: var(--lh-relaxed);
+  color: var(--ink-2);
+}
+
+.caption {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
+  color: var(--ink-3);
+}
+
+.kicker,
+.eyebrow {
+  font-family: var(--font-display);
+  font-size: var(--fs-caption);
+  line-height: 1.4;
+  letter-spacing: 4rpx;
+  color: var(--ink-3);
+}
+
+.num {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5rpx;
+}
+
+.text-ellipsis {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.clamp2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 竖排题签：只用于单字/短词的装饰，不承载长文本（长文本用 .section-head） */
+.vlabel {
+  width: 1em;
+  font-family: var(--font-display);
+  font-size: var(--fs-caption);
+  line-height: 1.16;
+  letter-spacing: 2rpx;
+  word-break: break-all;
+  color: var(--ink-3);
+}
+
+/* 分区标题：替代原先的竖排题签，横排可读性更好 */
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 0 var(--sp-3);
+}
+
+.section-head__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  letter-spacing: 2rpx;
+  color: var(--ink);
+}
+
+.section-head__sub {
+  font-size: var(--fs-caption);
+  letter-spacing: 1rpx;
+  color: var(--ink-3);
+}
+
+/* ============================================================================
+   线与面
+   ============================================================================ */
+
+.rule {
+  height: 1rpx;
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    var(--line-strong) 12%,
+    var(--line-strong) 88%,
+    transparent
+  );
+}
+
+.divider {
+  height: 1rpx;
+  background-color: var(--line);
+  transform: scaleY(0.5);
+}
+
+/* 底部渐隐：让内容从 Dock 下方自然淡出 */
+.tab-scrim {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(156rpx + env(safe-area-inset-bottom));
+  background-image: linear-gradient(180deg, transparent 0%, var(--bg) 72%);
+  pointer-events: none;
+  z-index: 85;
+}
+
+/* 页面底部安全留白：Dock 高 112rpx + 上下 16rpx + 呼吸 32rpx */
+.page-room {
+  height: calc(176rpx + env(safe-area-inset-bottom));
+}
+
+/* ============================================================================
+   动效基元
+   ----------------------------------------------------------------------------
+   规则：同一元素同一时刻只能有一个 transform 所有者。
+   入场用 .enter 挂在包装层；按压反馈挂在目标本身。
+   ============================================================================ */
+
+.enter {
+  animation: enter var(--d-long) var(--e-decelerate) both;
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 28rpx, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.enter--fade {
+  animation: fade-in var(--d-short) var(--e-standard) backwards;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.enter--pop {
+  animation: pop-in var(--d-medium) var(--e-spring) backwards;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.bar-up {
+  animation: bar-up var(--d-medium) var(--e-decelerate) backwards;
+}
+
+@keyframes bar-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 24rpx, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* 骨架屏：透明度呼吸，比位移渐变省一个数量级的绘制 */
+.skeleton {
+  background-color: var(--surface-2);
+  border-radius: var(--r-xs);
+  animation: skeleton-pulse var(--d-breathe) ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.spin {
+  animation: spin var(--d-loop) linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 减弱动效：功能不变，只去掉位移与弹性 */
+.reduce-motion .enter,
+.reduce-motion .enter--pop,
+.reduce-motion .page-enter,
+.reduce-motion .bar-up,
+.reduce-motion .stamp-in {
+  animation: fade-in var(--d-micro) linear backwards;
+}
+
+.reduce-motion .skeleton,
+.reduce-motion .spin,
+.reduce-motion .feed-foot__spin {
+  animation: none !important;
+}
+
+.reduce-motion .card,
+.reduce-motion .dish-card,
+.reduce-motion .tab-item,
+.reduce-motion .tab-pill,
+.reduce-motion .cat {
+  transition: none !important;
+}
+
+.reduce-motion.page-enter { animation: none; }

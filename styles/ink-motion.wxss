@@ -1,0 +1,38 @@
+/* 东方界面动效配方：只为结构与反馈服务，不持续扰动阅读。 */
+.ink-reveal { animation: ink-reveal var(--d-reveal) var(--e-decelerate) both; }
+.ink-rise { animation: ink-rise var(--d-long) var(--e-decelerate) both; }
+.ink-line { transform-origin: left center; animation: ink-line var(--d-reveal) var(--e-standard) both; }
+.delay-1 { animation-delay: var(--d-stagger); }
+.delay-2 { animation-delay: calc(var(--d-stagger) * 2); }
+.delay-3 { animation-delay: calc(var(--d-stagger) * 3); }
+.delay-4 { animation-delay: calc(var(--d-stagger) * 4); }
+
+@keyframes ink-reveal {
+  from { opacity: 0; transform: translate3d(22rpx, 8rpx, 0) scale(1.025); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes ink-rise {
+  from { opacity: 0; transform: translate3d(0, 30rpx, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes ink-line {
+  from { opacity: 0; transform: scaleX(0.1); }
+  to { opacity: 1; transform: scaleX(1); }
+}
+.reduce-motion .ink-reveal,
+.reduce-motion .ink-rise,
+.reduce-motion .ink-line {
+  animation: none !important;
+  transform: none !important;
+  opacity: 1;
+}
+
+/* 返回已有页面直接呈现内容，避免重新挂载列表/模板时重播开卷。 */
+.motion-settled .ink-reveal,
+.motion-settled .ink-rise,
+.motion-settled .ink-line,
+.motion-settled .enter,
+.motion-settled .enter--pop,
+.motion-settled .group { animation: none !important; }
+.motion-paused .skeleton,
+.motion-paused .spin { animation-play-state: paused; }

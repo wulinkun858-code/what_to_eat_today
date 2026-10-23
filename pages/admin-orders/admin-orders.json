@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "账房 · 全部订单",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "nav-bar": "/components/nav-bar/index"
+  },
+  "navigationStyle": "custom"
+}

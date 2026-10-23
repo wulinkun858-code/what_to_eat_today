@@ -1,0 +1,16 @@
+<view class="page {{pageVisible ? '' : 'motion-paused'}} {{motionSettled ? 'motion-settled' : ''}} theme-{{theme}} {{reduce ? 'reduce-motion' : ''}} page-enter">
+  <nav-bar title="" />
+  <view class="orders-head"><view class="eyebrow">食帖往来 · 我的食单</view><view class="orders-head__row"><view class="orders-title">每一餐，皆有回响。</view><view class="orders-count"><text class="orders-count__num num">{{total}}</text><text>席记忆</text></view></view><view class="orders-intro">循着烟火的进度，等一份热气腾腾。</view></view>
+  <view class="order-list">
+    <view class="order-card {{highlightId === item._id ? 'order-highlight' : ''}}" wx:for="{{list}}" wx:key="_id">
+      <view class="order-head"><view><view class="order-no">报餐单 · {{item.timeText}}</view><view class="order-status-text {{item.statusCls}}">{{item.statusText}}</view></view><view class="status-mark {{item.statusCls}}">{{item.statusChar}}</view></view>
+      <view class="order-content">
+        <view class="steps" wx:if="{{item.status !== 'canceled'}}"><view class="step {{item.step >= 0 ? 'step--on' : ''}}"><view class="step__dot"></view><text>落单</text></view><view class="step__line {{item.step >= 1 ? 'step__line--on' : ''}}"></view><view class="step {{item.step >= 1 ? 'step--on' : ''}}"><view class="step__dot"></view><text>入灶</text></view><view class="step__line {{item.step >= 2 ? 'step__line--on' : ''}}"></view><view class="step {{item.step >= 2 ? 'step--on' : ''}}"><view class="step__dot"></view><text>上桌</text></view></view>
+        <view class="order-items"><view class="order-item" wx:for="{{item.items}}" wx:for-item="dish" wx:key="dishId" data-id="{{dish.dishId}}" bindtap="onDishTap"><image wx:if="{{dish.dishImage}}" class="item-thumb" src="{{dish.dishImage}}" mode="aspectFill" /><view wx:else class="item-thumb item-thumb--empty">食</view><view class="item-body"><view class="item-name text-ellipsis">{{dish.dishName}}</view><view class="item-chef" wx:if="{{dish.chefNickname}}">掌勺 · {{dish.chefNickname}}</view></view><text class="item-arrow">↗</text></view></view>
+      </view>
+      <view class="order-foot" wx:if="{{item.cancellable}}"><text class="order-foot__note">掌勺人接单前可取消</text><view class="order-cancel" hover-class="control--press" hover-stay-time="60" data-id="{{item._id}}" bindtap="onCancelTap">取消订单</view></view>
+    </view>
+  </view>
+  <view class="footer" wx:if="{{list.length}}"><text wx:if="{{loading}}">正在展开下一页…</text><text wx:elif="{{noMore}}">食单已至末页</text></view>
+  <view class="empty" wx:if="{{!loading && !list.length}}"><view class="empty__halo"></view><text class="empty__title">还没有食单</text><text class="empty__sub">去首页挑几道想吃的菜</text></view>
+</view>

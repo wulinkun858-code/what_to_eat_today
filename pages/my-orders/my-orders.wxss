@@ -1,0 +1,46 @@
+.page { min-height: 100vh; padding-bottom: var(--sp-6); background: var(--bg); }
+.orders-head { margin: var(--sp-4) var(--sp-4) var(--sp-5); padding-bottom: var(--sp-4); border-bottom: 1rpx solid var(--line-strong); }
+.eyebrow { color: var(--accent); font-size: var(--fs-caption); letter-spacing: 4rpx; }
+.orders-head__row { display: flex; align-items: center; justify-content: space-between; margin: var(--sp-3) 0; }
+.orders-title { max-width: 450rpx; font-family: var(--font-display); font-size: var(--fs-h1); line-height: var(--lh-snug); color: var(--ink); letter-spacing: 3rpx; }
+.orders-count { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; margin-left: var(--sp-2); color: var(--ink-3); font-size: var(--fs-caption); }
+.orders-count__num { color: var(--accent); font-size: var(--fs-h1); line-height: var(--lh-tight); margin-bottom: var(--sp-1); }
+.orders-intro { color: var(--ink-3); font-size: var(--fs-meta); line-height: var(--lh-normal); }
+.order-list { margin: 0 var(--sp-4); }
+.order-card { margin-bottom: var(--sp-4); border: 1rpx solid var(--line); border-radius: var(--r-lg); background: var(--surface); overflow: hidden; }
+.order-head { display: flex; align-items: center; justify-content: space-between; padding: var(--sp-3) var(--sp-4); background: var(--accent-soft); }
+.order-no { color: var(--ink-3); font-size: var(--fs-caption); }
+.order-status-text { margin-top: var(--sp-1); color: var(--accent); font-family: var(--font-display); font-size: var(--fs-h2); letter-spacing: 3rpx; }
+.status-mark { display: flex; align-items: center; justify-content: center; width: 68rpx; height: 68rpx; border: 1rpx solid currentColor; border-radius: 50%; font-family: var(--font-display); font-size: var(--fs-title); }
+.order-content { display: flex; padding: var(--sp-4) var(--sp-3) var(--sp-3); }
+.steps { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 76rpx; margin-right: var(--sp-2); padding-top: var(--sp-1); }
+.step { display: flex; flex-direction: column; align-items: center; color: var(--ink-3); font-size: var(--fs-caption); }
+.step__dot { width: 12rpx; height: 12rpx; margin-bottom: var(--sp-1); border: 2rpx solid var(--line-strong); background: var(--surface); border-radius: 50%; }
+.step--on { color: var(--accent); }
+.step--on .step__dot { border-color: var(--accent); background: var(--accent); }
+.step__line { width: 1rpx; height: 24rpx; margin: var(--sp-1) 0; background: var(--line); }
+.step__line--on { background: var(--accent); }
+.order-items { flex: 1; min-width: 0; }
+.order-item { display: flex; align-items: center; padding: var(--sp-2) 0 var(--sp-3); margin-bottom: var(--sp-2); border-bottom: 1rpx solid var(--line); }
+.order-item:last-child { border-bottom: 0; margin-bottom: 0; }
+.item-thumb { flex-shrink: 0; width: 88rpx; height: 88rpx; margin-right: var(--sp-2); background: var(--accent-soft); border-radius: var(--r-md); }
+.item-thumb--empty { display: flex; align-items: center; justify-content: center; color: var(--accent); font-family: var(--font-display); font-size: var(--fs-title); }
+.item-body { flex: 1; min-width: 0; }
+.item-name { font-family: var(--font-display); font-size: var(--fs-title); color: var(--ink); }
+.item-chef { margin-top: var(--sp-1); font-size: var(--fs-caption); color: var(--ink-3); }
+.item-arrow { color: var(--accent); font-size: var(--fs-meta); padding: var(--sp-1); }
+.order-foot { display: flex; align-items: center; justify-content: space-between; padding: var(--sp-3) var(--sp-4); border-top: 1rpx solid var(--line); }
+.order-foot__note { font-size: var(--fs-caption); color: var(--ink-3); }
+.order-cancel { display: flex; align-items: center; justify-content: center; min-height: 88rpx; min-width: 88rpx; color: var(--ink-2); font-size: var(--fs-meta); padding: var(--sp-2) var(--sp-3); border: 1rpx solid var(--line-strong); border-radius: var(--r-pill); transition: opacity var(--d-short) var(--e-standard); }
+.control--press { opacity: .65; }
+.st-pending { color: var(--accent); }
+.st-cooking { color: var(--gold); }
+.st-done { color: var(--jade); }
+.st-canceled { color: var(--ink-3); }
+.order-highlight { animation: order-highlight var(--d-sweep) var(--e-decelerate) both; }
+@keyframes order-highlight { from { opacity: .5; transform: translateY(16rpx); } to { opacity: 1; transform: translateY(0); } }
+.footer { padding: var(--sp-3); text-align: center; font-size: var(--fs-caption); color: var(--ink-3); }
+.reduce-motion .order-highlight { animation: none; }
+.reduce-motion .order-cancel { transition: none; }
+
+.reduce-motion .control--press { transform: none; }

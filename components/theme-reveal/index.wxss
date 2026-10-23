@@ -1,0 +1,64 @@
+@import "../../styles/tokens.wxss";
+
+/* 仅过渡 transform / opacity；实际合成与绘制表现需由运行平台验证。 */
+.folio {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-reveal);
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.folio__leaf {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: calc(50% + 1px);
+  transition: transform var(--d-short) var(--e-standard);
+}
+
+.folio__leaf--left {
+  left: 0;
+  background: linear-gradient(90deg, var(--folio-wash), var(--folio-paper) 72%);
+  transform: translate3d(-102%, 0, 0);
+}
+
+.folio__leaf--right {
+  right: 0;
+  background: linear-gradient(270deg, var(--folio-wash), var(--folio-paper) 72%);
+  transform: translate3d(102%, 0, 0);
+}
+
+.folio--closed .folio__leaf {
+  transform: translate3d(0, 0, 0);
+}
+
+.folio__caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  color: var(--folio-ink);
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--sp-1);
+  opacity: 0;
+  transform: translate3d(0, -50%, 0);
+  transition: opacity var(--d-micro) var(--e-standard);
+}
+
+.folio--closed .folio__caption {
+  opacity: 1;
+}
+
+.folio__rule {
+  width: var(--sp-5);
+  height: 1px;
+  background: var(--folio-ink);
+  opacity: 0.24;
+}

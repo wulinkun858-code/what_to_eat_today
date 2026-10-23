@@ -1,0 +1,74 @@
+<!-- 青瓷山水：轻导航、开卷题景、横向章节与单列编辑式菜单 -->
+<view class="page {{pageVisible ? '' : 'motion-paused'}} {{motionSettled ? 'motion-settled' : ''}} home theme-{{theme}} {{reduce ? 'reduce-motion' : ''}}">
+  <view class="nav {{scrolled ? 'nav--scrolled' : ''}}" style="padding-top:{{statusBarHeight}}px">
+    <view class="nav__bar" style="height:{{navBarHeight}}px">
+      <view class="nav__brand"><view class="nav__emblem serif">食</view><text>坤坤食帖</text></view>
+      <view class="theme-toggle" bindtap="onThemeToggle" hover-class="is-pressed" aria-label="切换青瓷与墨黑主题">
+        <view class="theme-toggle__orb {{theme === 'ink' ? 'theme-toggle__orb--night' : ''}}"></view>
+      </view>
+    </view>
+    <view class="nav__search">
+      <view class="search {{searchFocused ? 'search--focus' : ''}}">
+        <view class="search__lens"></view>
+        <input class="search__input" placeholder="寻一道菜，或一味食材" placeholder-class="search__ph" confirm-type="search" value="{{keyword}}" bindinput="onSearchInput" bindconfirm="onSearchConfirm" bindfocus="onSearchFocus" bindblur="onSearchBlur" />
+        <view wx:if="{{keyword}}" class="search__clear" bindtap="onClearKeyword" aria-label="清空搜索">×</view>
+      </view>
+      <view class="search__submit" bindtap="onSearchConfirm" hover-class="is-pressed">寻味</view>
+    </view>
+  </view>
+  <view style="height:{{navHeight}}px"></view>
+
+  <view class="landscape">
+    <image class="landscape__art ink-reveal" src="/assets/art/celadon-landscape.jpg" mode="aspectFill" aria-hidden="true" />
+    <view class="landscape__fade"></view>
+    <view class="landscape__copy">
+      <view class="landscape__eyebrow ink-rise">四季入馔 · 一日成诗</view>
+      <view class="landscape__title serif ink-rise delay-1">人间有味<text class="landscape__line">四时清欢</text></view>
+      <view class="landscape__rule ink-line delay-2"></view>
+      <view class="landscape__sub ink-rise delay-3">把寻常一餐，吃成心头的欢喜。</view>
+    </view>
+    <view class="landscape__annotation"><text>山川入席</text><view class="seal seal--sm">食</view></view>
+    <view class="landscape__edition"><text>坤坤食帖</text><text class="num">VOL. {{postNo}}</text></view>
+  </view>
+
+  <view class="chapter-head ink-rise delay-2">
+    <view><text class="chapter-head__eyebrow">THE DAILY TABLE</text><view class="chapter-head__title serif">今日寻味<text class="chapter-head__count">{{total}} 道家常</text></view></view>
+    <view wx:if="{{canManage}}" class="write" bindtap="onAddTap" hover-class="is-pressed" aria-label="添加菜品"><text class="write__plus">＋</text><text>添一道</text></view>
+    <view wx:else class="chapter-head__mark">一餐一味</view>
+  </view>
+
+  <scroll-view class="cats" scroll-x enhanced show-scrollbar="{{false}}" scroll-with-animation="{{!reduce}}" scroll-into-view="{{catIntoView}}">
+    <view class="cats__row">
+      <view wx:for="{{categories}}" wx:key="_id" id="cat-{{index}}" class="cat {{activeCategory === item._id ? 'cat--on' : ''}}" data-id="{{item._id}}" data-index="{{index}}" bindtap="onCategoryTap" hover-class="cat--press">
+        <text class="cat__number num">{{index < 9 ? '0' : ''}}{{index + 1}}</text><text>{{item.name}}</text><view class="cat__line"></view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="feature" wx:if="{{banners.length && !keyword && !activeCategory}}">
+    <swiper class="feature__swiper" autoplay="{{pageVisible && !reduce}}" circular interval="{{6000}}" duration="{{reduce ? 0 : 460}}" bindchange="onBannerChange">
+      <swiper-item wx:for="{{banners}}" wx:key="_id">
+        <view class="feature__item" data-type="{{item.type}}" data-id="{{item._id}}" bindtap="onBannerTap" bindlongpress="onBannerLongPress" hover-class="feature__item--press">
+          <view class="feature__text"><view class="feature__eyebrow">掌勺人的心意</view><view class="feature__title serif">{{item.title || '食帖影集'}}</view><view class="feature__meta">{{item.type === 'dish' ? '翻开这一味' : '轻触赏图 · 长按管理'}}<text>↗</text></view></view>
+          <image class="feature__img" src="{{item.image}}" mode="aspectFill" lazy-load />
+          <view class="feature__page num">{{index + 1}} / {{banners.length}}</view>
+        </view>
+      </swiper-item>
+    </swiper>
+  </view>
+
+  <view class="menu-heading" wx:if="{{list.length}}"><view class="menu-heading__line"></view><text>{{keyword ? '寻味所得' : activeCategoryName}}</text><view class="menu-heading__line"></view></view>
+  <view class="menu" wx:if="{{loading && !list.length}}"><view class="dish-row dish-row--sk" wx:for="{{[1,2,3]}}" wx:key="*this"><view class="dish-row__image skeleton"></view><view class="dish-row__content"><view class="skeleton sk-line"></view><view class="skeleton sk-line"></view></view></view></view>
+  <view class="menu" wx:if="{{list.length}}">
+    <view class="dish-entry {{index < 5 ? 'ink-rise' : ''}}" wx:for="{{list}}" wx:key="_id" style="animation-delay:{{index < 5 ? index * 55 : 0}}ms">
+      <view class="dish-row" data-id="{{item._id}}" bindtap="onDishTap" hover-class="dish-row--press">
+        <view class="dish-row__visual"><image wx:if="{{item.image}}" class="dish-row__image" src="{{item.image}}" mode="aspectFill" lazy-load /><view wx:else class="dish-row__image dish-row__placeholder serif">一味</view><text class="dish-row__index num">{{index < 9 ? '0' : ''}}{{index + 1}}</text></view>
+        <view class="dish-row__content"><text class="dish-row__category">{{item.categoryName || '家常滋味'}}</text><view class="dish-row__name serif">{{item.name}}</view><view class="dish-row__description clamp2">{{item.description || '一箸一味，都是家的滋味。'}}</view><view class="dish-row__bottom"><text class="dish-row__chef text-ellipsis">{{item.chefNickname ? item.chefNickname + ' 掌勺' : '用心料理'}}</text><view class="want {{wantBumpId === item._id ? 'want--bump' : ''}}" data-id="{{item._id}}" catchtap="onWantTap" hover-class="want--press" aria-label="加入点菜单"><text>想吃</text><text class="want__plus">＋</text></view></view></view>
+      </view>
+    </view>
+  </view>
+  <view class="feed-foot" wx:if="{{list.length}}"><view class="feed-foot__spin spin" wx:if="{{loading}}"></view><text>{{loading ? '正在翻开下一页' : (noMore ? '一餐有尽，余味悠长' : '继续向下寻味')}}</text></view>
+  <view class="empty" wx:if="{{!loading && !list.length}}"><view class="empty__halo"></view><text class="empty__title">{{emptyTitle}}</text><text class="empty__sub">{{emptySub}}</text><view wx:if="{{canManage && !keyword}}" class="empty__action" bindtap="onAddTap">添第一道菜</view><view wx:elif="{{keyword}}" class="empty__action" bindtap="onClearKeyword">重新寻味</view></view>
+  <view wx:if="{{fly.show}}" class="fly" style="left:{{fly.x}}px;top:{{fly.y}}px;transform:translate3d({{fly.dx}}px,{{fly.dy}}px,0) scale({{fly.scale}});opacity:{{fly.opacity}}"></view>
+  <view class="tab-scrim"></view><theme-reveal id="reveal"></theme-reveal>
+</view>

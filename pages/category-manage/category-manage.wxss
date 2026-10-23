@@ -1,0 +1,29 @@
+.page { min-height: 100vh; padding-bottom: var(--sp-6); background: var(--bg); }
+.manage-head { margin: var(--sp-4); padding-bottom: var(--sp-4); border-bottom: 1rpx solid var(--line-strong); }
+.eyebrow { color: var(--accent); font-size: var(--fs-caption); letter-spacing: 4rpx; }
+.manage-head__row { display: flex; align-items: center; justify-content: space-between; margin: var(--sp-3) 0; }
+.manage-title { font-family: var(--font-display); font-size: var(--fs-h1); color: var(--ink); letter-spacing: 4rpx; }
+.manage-count { display: flex; flex-direction: column; align-items: flex-end; color: var(--ink-3); font-size: var(--fs-caption); }
+.manage-count__num { color: var(--accent); font-size: var(--fs-h1); line-height: var(--lh-tight); }
+.manage-intro { color: var(--ink-3); font-size: var(--fs-meta); line-height: var(--lh-normal); }
+.category-heading { display: flex; justify-content: space-between; margin: var(--sp-5) var(--sp-4) var(--sp-2); color: var(--ink-3); font-size: var(--fs-caption); }
+.cat-list { margin: 0 var(--sp-4); }
+.cat-row { display: flex; align-items: center; min-height: 136rpx; border-bottom: 1rpx solid var(--line); transition: transform var(--d-short) var(--e-standard), opacity var(--d-short) var(--e-standard); }
+.cat-index { flex-shrink: 0; width: 72rpx; color: var(--accent); font-size: var(--fs-h2); }
+.cat-body { flex: 1; min-width: 0; display: flex; align-items: center; }
+.cat-name { max-width: 300rpx; color: var(--ink); font-family: var(--font-display); font-size: var(--fs-h2); letter-spacing: 2rpx; }
+.cat-rule { flex: 1; height: 1rpx; margin: 0 var(--sp-3); background: var(--line); }
+.cat-edit { font-size: var(--fs-caption); color: var(--ink-3); }
+.chev { flex-shrink: 0; width: 10rpx; height: 10rpx; margin-left: var(--sp-2); border-top: 1rpx solid var(--accent); border-right: 1rpx solid var(--accent); transform: rotate(45deg); }
+.add { display: flex; align-items: center; padding: var(--sp-4); margin: var(--sp-4); background: var(--accent-soft); border: 1rpx solid var(--line); border-radius: var(--r-lg); transition: transform var(--d-short) var(--e-standard), opacity var(--d-short) var(--e-standard); }
+.add__plus { flex-shrink: 0; margin-right: var(--sp-3); color: var(--accent); font-size: var(--fs-h1); }
+.add__title { color: var(--accent); font-size: var(--fs-title); font-family: var(--font-display); }
+.add__sub { margin-top: var(--sp-1); font-size: var(--fs-caption); color: var(--ink-3); }
+.add__arrow { margin-left: auto; color: var(--accent); font-size: var(--fs-title); }
+.tip { display: flex; align-items: flex-start; margin: var(--sp-4); color: var(--ink-3); font-size: var(--fs-caption); line-height: var(--lh-relaxed); }
+.tip__mark { flex-shrink: 0; margin-right: var(--sp-2); color: var(--accent); font-family: var(--font-display); font-size: var(--fs-body); }
+.control--press { transform: translateX(4rpx); opacity: .7; }
+.loading { text-align: center; padding: var(--sp-4); font-size: var(--fs-caption); color: var(--ink-3); }
+.reduce-motion .cat-row, .reduce-motion .add { transition: none; }
+
+.reduce-motion .control--press { transform: none; }

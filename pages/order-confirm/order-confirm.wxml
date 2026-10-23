@@ -1,0 +1,12 @@
+<view class="page {{pageVisible ? '' : 'motion-paused'}} {{motionSettled ? 'motion-settled' : ''}} theme-{{theme}} {{reduce ? 'reduce-motion' : ''}} page-enter">
+  <nav-bar title="" />
+  <view class="confirm-head"><view class="eyebrow">一席清欢 · 待落单</view><view class="confirm-title">今日想吃</view><view class="confirm-intro">所选之味，皆为这一餐的期待。</view></view>
+  <view class="order-sheet" wx:if="{{total}}">
+    <view class="sheet-top"><text class="sheet-title">点菜食笺</text><view class="sheet-mark">待</view></view>
+    <view class="group" wx:for="{{groups}}" wx:for-item="group" wx:for-index="g" wx:key="chefNickname"><view class="group__head"><view class="group__label"><text class="group__pre">掌勺</text><text class="group__name">{{group.chefNickname}}</text></view><text class="group__count num">{{group.items.length}} 道</text></view><view class="row {{removingId === item._id ? 'row--out' : ''}}" wx:for="{{group.items}}" wx:for-item="item" wx:for-index="i" wx:key="_id"><text class="row__no num">{{i < 9 ? '0' : ''}}{{i + 1}}</text><image wx:if="{{item.image}}" class="row__thumb" src="{{item.image}}" mode="aspectFill" /><view wx:else class="row__thumb row__thumb--empty">食</view><text class="row__name">{{item.name}}</text><view class="row__rm" hover-class="control--press" hover-stay-time="60" data-id="{{item._id}}" catchtap="onRemoveTap">移除</view></view></view>
+    <view class="order-foot"><view class="order-foot__line"></view><text>共 {{total}} 道好味 · 提交后即刻通知掌勺人</text><text class="order-foot__sign">坤坤食帖</text></view>
+  </view>
+  <view class="empty" wx:if="{{!total}}"><view class="empty__halo"></view><text class="empty__title">点菜单还是空的</text><text class="empty__sub">回首页挑几道想吃的</text></view>
+  <view class="order-bar" wx:if="{{total}}"><view class="order-bar__info"><text class="order-bar__caption">这一席</text><view><text class="order-bar__num num">{{total}}</text><text class="order-bar__unit">道菜</text></view></view><view class="order-bar__btn {{(submitting || removingId || stamped) ? 'order-bar__btn--off' : ''}}" hover-class="{{(submitting || removingId || stamped) ? '' : 'control--press'}}" hover-stay-time="60" bindtap="onSubmit">{{submitting ? '正在落单' : '确认这一餐'}}<text class="order-bar__arrow">↗</text></view></view>
+  <view class="stamp-overlay" wx:if="{{stamped}}"><view class="stamp-overlay__ripple"></view><view class="stamp-overlay__seal"><text>已落单</text><text class="stamp-overlay__sub">好味正在路上</text></view></view>
+</view>

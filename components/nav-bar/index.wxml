@@ -1,0 +1,22 @@
+<!-- components/nav-bar/index.wxml -->
+<view class="navbar-spacer" wx:if="{{!overlay}}" style="height:{{total}}px"></view>
+
+<view
+  class="navbar theme-{{theme}} {{reduce ? 'navbar--reduce' : ''}} {{overlay ? 'navbar--overlay' : ''}} {{border ? 'navbar--border' : ''}} {{board ? 'navbar--board' : ''}}"
+  style="padding-top:{{statusBarHeight}}px"
+>
+  <view class="navbar__bar" style="height:{{navBarHeight}}px">
+    <view
+      wx:if="{{back}}"
+      class="navbar__back"
+      hover-class="navbar__back--press"
+      hover-stay-time="60"
+      bindtap="onBack"
+      aria-label="返回"
+    >
+      <view class="navbar__arrow"></view>
+    </view>
+
+    <text class="navbar__title">{{title}}</text>
+  </view>
+</view>

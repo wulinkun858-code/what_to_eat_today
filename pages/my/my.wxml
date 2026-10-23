@@ -1,0 +1,21 @@
+<!-- 小院：个人题签、食事统计、功能索引与偏好 -->
+<view class="page {{pageVisible ? '' : 'motion-paused'}} {{motionSettled ? 'motion-settled' : ''}} courtyard theme-{{theme}} {{reduce ? 'reduce-motion' : ''}}" style="padding-top:{{statusBarHeight}}px">
+  <view class="courtyard__top"><text class="courtyard__brand serif">坤坤食帖</text><text class="courtyard__caption">一方小院 · 三餐四季</text></view>
+  <view class="profile ink-rise">
+    <image class="profile__landscape" src="/assets/art/celadon-landscape.jpg" mode="aspectFill" aria-hidden="true" />
+    <view class="profile__intro"><view class="eyebrow">MY LITTLE COURTYARD</view><view class="profile__title serif">我的小院</view><view class="profile__line"></view></view>
+    <view class="profile__identity" bindtap="onProfileTap">
+      <view class="profile__words"><view class="profile__name serif">{{nickname || '食客，请留名'}}</view><view class="profile__role"><text>{{roleLabel}}</text><text>·</text><text>轻触修改昵称</text></view></view>
+      <view class="avatar" catchtap="onAvatarTap" hover-class="avatar--press" aria-label="更换头像"><image wx:if="{{avatarFileID}}" class="avatar__img" src="{{avatarFileID}}" mode="aspectFill" /><view wx:else class="avatar__ph serif">{{roleLabel === '食客' ? '食' : (roleLabel === '厨师' ? '厨' : '掌')}}</view><view class="avatar__dot"></view><view class="avatar__mask" wx:if="{{avatarUploading}}">上传中</view></view>
+    </view>
+    <view class="stats"><view class="stat" bindtap="onStatDishTap" hover-class="is-pressed"><text class="stat__num num">{{dishCount}}</text><text class="stat__label">道家常好味</text><text class="stat__arrow">↗</text></view><view class="stats__rule"></view><view class="stat" bindtap="onStatTagTap" hover-class="is-pressed"><text class="stat__num num">{{tagCount}}</text><text class="stat__label">味食材标签</text><text class="stat__arrow">↗</text></view></view>
+  </view>
+
+  <view class="courtyard-heading"><text class="serif">院中食事</text><text>每一餐，都有着落</text></view>
+  <view class="courtyard-menu ink-rise delay-1"><view class="courtyard-menu__cell" wx:for="{{menu}}" wx:key="key"><view class="menu-entry" data-key="{{item.key}}" bindtap="onMenuTap" hover-class="menu-entry--press"><view class="menu-entry__top"><text class="menu-entry__index num">{{index < 9 ? '0' : ''}}{{index + 1}}</text><text class="menu-entry__badge num" wx:if="{{item.badge}}">{{item.badge}} 条未读</text><text wx:else class="menu-entry__arrow">↗</text></view><view class="menu-entry__name serif">{{item.text}}</view><view class="menu-entry__description">{{item.desc}}</view></view></view></view>
+
+  <view class="courtyard-heading"><text class="serif">心境与偏好</text><text>随心，自在</text></view>
+  <view class="preferences ink-rise delay-2"><view class="preference" bindtap="onThemeToggle"><view class="preference__copy"><view class="preference__title">墨黑模式</view><view class="preference__description">柔黑暖灰，安静阅览</view></view><view class="switch {{theme === 'ink' ? 'switch--on' : ''}}" aria-role="switch" aria-checked="{{theme === 'ink'}}" aria-label="墨黑模式"><view class="switch__knob"></view></view></view><view class="preference" bindtap="onReduceToggle"><view class="preference__copy"><view class="preference__title">减少动效</view><view class="preference__description">静静翻阅，也有好滋味</view></view><view class="switch {{reduce ? 'switch--on' : ''}}" aria-role="switch" aria-checked="{{reduce}}" aria-label="减少动效"><view class="switch__knob"></view></view></view></view>
+  <view class="courtyard-footer"><view class="seal seal--sm">食</view><text class="serif">人间烟火，最抚凡人心。</text></view>
+  <view class="tab-scrim"></view><theme-reveal id="reveal"></theme-reveal>
+</view>

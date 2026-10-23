@@ -1,0 +1,26 @@
+@import "../styles/tokens.wxss";
+.dock { box-sizing: border-box; position: fixed; left: 24rpx; right: 24rpx; bottom: calc(16rpx + env(safe-area-inset-bottom)); height: 116rpx; display: flex; align-items: center; padding: 8rpx; background: var(--surface); border: 1rpx solid var(--line); border-radius: var(--r-pill, 999rpx); overflow: hidden; z-index: var(--z-dock); box-shadow: var(--shadow-md); font-family: var(--font-body); line-height: var(--lh-tight); }
+.dock__tabs { position: relative; flex: 1; min-width: 0; height: 96rpx; display: flex; border-radius: var(--r-pill, 999rpx); overflow: hidden; }
+.dock__mark { position: absolute; width: 33.3333%; height: 100%; left: 0; top: 0; background: var(--accent-soft); border-radius: var(--r-pill, 999rpx); }
+.dock__tab { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--ink-3); gap: 8rpx; }
+.dock__tab--on { color: var(--accent); }
+.dock__tab-text { font-size: var(--fs-caption); letter-spacing: 2rpx; line-height: 1.2; font-family: var(--font-body); }
+.dock__glyph { position: relative; width: 28rpx; height: 28rpx; box-sizing: border-box; }
+.dock__glyph--0 { border: 2rpx solid currentColor; border-radius: 50%; }
+.dock__glyph--0::before { content: ''; position: absolute; width: 8rpx; height: 16rpx; left: 8rpx; top: 4rpx; border: 1rpx solid currentColor; border-radius: 100% 0; transform: rotate(25deg); }
+.dock__glyph--1 { border: 2rpx solid currentColor; border-radius: var(--r-xs) var(--r-xs) var(--r-xs) 0; }
+.dock__glyph--1::before { content: ''; position: absolute; left: 5rpx; right: 5rpx; height: 1rpx; background: currentColor; top: 7rpx; box-shadow: 0 6rpx currentColor; }
+.dock__glyph--2 { border: 2rpx solid currentColor; border-radius: 50% 50% var(--r-xs) var(--r-xs); }
+.dock__glyph--2::before { content: ''; position: absolute; left: 8rpx; bottom: 0; width: 8rpx; height: 12rpx; border: 1rpx solid currentColor; border-bottom: none; border-radius: var(--r-xs) var(--r-xs) 0 0; }
+.dock__cart { box-sizing: border-box; width: 216rpx; height: 96rpx; margin-left: 8rpx; flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 12rpx; border-radius: var(--r-pill, 999rpx); color: var(--accent); background: var(--surface-2); transition: transform var(--d-micro) var(--e-standard); }
+.dock__cart--on { background: var(--accent); color: var(--accent-ink); }
+.dock__cart--press { transform: scale(0.97); }
+.dock__bag { position: relative; width: 36rpx; height: 36rpx; border: 1rpx solid currentColor; border-radius: var(--r-xs); margin-top: 5rpx; display: flex; align-items: center; justify-content: center; }
+.dock__bag-handle { position: absolute; width: 16rpx; height: 10rpx; border: 1rpx solid currentColor; border-bottom: none; border-radius: var(--r-xs) var(--r-xs) 0 0; top: -11rpx; left: 8rpx; }
+.dock__cart-count { font-size: var(--fs-badge); line-height: 1; font-family: var(--font-num); }
+.dock__cart-label { font-size: var(--fs-meta); font-family: var(--font-display); letter-spacing: 2rpx; }
+.dock__cart-arrow { font-size: var(--fs-meta); }
+.dock--reduce { animation: none; }
+.dock--reduce .dock__mark,.dock--reduce .dock__cart { transition: none; }
+
+.dock--reduce .dock__cart--press { transform: none; }

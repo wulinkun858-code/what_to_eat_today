@@ -1,0 +1,8 @@
+<!-- 固定色面不改变页面布局；双幅合卷后只提交一次主题。 -->
+<view wx:if="{{show}}" class="folio folio--{{phase}} theme-{{key}}"
+  style="--folio-paper:{{paper}};--folio-wash:{{wash}};--folio-ink:{{ink}}"
+  aria-hidden="true" catchtap="blockTouch" catchtouchmove="blockTouch">
+  <view class="folio__leaf folio__leaf--left"></view>
+  <view class="folio__leaf folio__leaf--right"></view>
+  <view class="folio__caption"><text>{{label}}</text><view class="folio__rule"></view></view>
+</view>

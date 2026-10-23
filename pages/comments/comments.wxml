@@ -1,0 +1,10 @@
+<!-- 食话：沿细线展开的个人滋味札记 -->
+<view class="page {{pageVisible ? '' : 'motion-paused'}} {{motionSettled ? 'motion-settled' : ''}} journal theme-{{theme}} {{reduce ? 'reduce-motion' : ''}}" style="padding-top:{{statusBarHeight}}px">
+  <view class="journal-top"><text class="serif">坤坤食帖</text><text>字里行间，亦有余味</text></view>
+  <view class="journal-heading ink-rise"><view class="eyebrow">NOTES OF EVERYDAY TASTE</view><view class="journal-heading__title serif">食话小笺<view class="seal seal--sm">记</view></view><view class="journal-heading__description">把好滋味，留在字里行间。</view><view class="journal-heading__foot"><text>我的食事札记</text><text class="num">{{total < 10 ? '0' : ''}}{{total}} 则</text></view></view>
+  <view class="journal-feed" wx:if="{{loading && !list.length}}"><view class="journal-note" wx:for="{{[1,2,3]}}" wx:key="*this"><view class="skeleton journal-sk"></view><view class="skeleton journal-sk"></view></view></view>
+  <view class="journal-feed" wx:if="{{list.length}}"><view class="journal-entry {{index < 6 ? 'ink-rise' : ''}}" wx:for="{{list}}" wx:key="_id" style="animation-delay:{{index < 6 ? index * 45 : 0}}ms"><view class="journal-entry__date"><text class="journal-entry__number num">{{index < 9 ? '0' : ''}}{{index + 1}}</text><view class="journal-entry__dot"></view></view><view class="journal-note" data-id="{{item.dishId}}" bindtap="onCardTap" hover-class="journal-note--press"><view class="journal-note__quote serif">“</view><view class="journal-note__text">{{item.content}}</view><view class="journal-note__foot"><view class="journal-note__dish text-ellipsis">{{item.dishName || '一道好滋味'}}</view><text class="journal-note__arrow">↗</text></view><text class="journal-note__time">{{item.timeText}}</text></view></view></view>
+  <view class="journal-end" wx:if="{{list.length}}">{{loading ? '翻阅中…' : (noMore ? '纸短情长，余味未尽' : '向下翻阅')}}</view>
+  <view class="empty" wx:if="{{!loading && !list.length}}"><view class="empty__halo"></view><text class="empty__title">一笺空白，待你落笔</text><text class="empty__sub">去一道菜的详情，记下你的心得。</text></view>
+  <view class="tab-scrim"></view>
+</view>

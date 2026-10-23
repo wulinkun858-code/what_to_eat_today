@@ -1,0 +1,8 @@
+<view class="page {{pageVisible ? '' : 'motion-paused'}} {{motionSettled ? 'motion-settled' : ''}} theme-{{theme}} {{reduce ? 'reduce-motion' : ''}} page-enter">
+  <nav-bar title="" />
+  <view class="manage-head"><view class="eyebrow">食帖有序 · 订单总览</view><view class="manage-head__row"><view class="manage-title">一餐一记</view><view class="manage-count"><text class="manage-count__num num">{{total}}</text><text>份报餐单</text></view></view><view class="manage-intro">从落单到上桌，让每一份期待都有着落。</view></view>
+  <view class="tip"><text class="tip__mark">账</text><text>点选食单，可将进行中的订单标记完成或取消。</text></view>
+  <view class="order-list"><view class="order-card" wx:for="{{list}}" wx:key="_id" hover-class="control--press" hover-stay-time="60" data-index="{{index}}" bindtap="onOrderTap"><view class="order-head"><view class="order-index num">{{index < 9 ? '0' : ''}}{{index + 1}}</view><view class="order-diner text-ellipsis">{{item.dinerNickname}} 的食单</view><view class="status-pill {{item.statusCls}}"><text class="status-pill__dot"></text>{{item.statusText}}</view></view><view class="order-dishes">{{item.items}}</view><view class="order-meta"><text>掌勺 {{item.chefs}} 位</text><text class="num">{{item.timeText}}</text><text class="order-open">查看处理 ↗</text></view></view></view>
+  <view class="footer" wx:if="{{list.length}}"><text wx:if="{{loading}}">正在展开下一页…</text><text wx:elif="{{noMore}}">食单已至末页</text></view>
+  <view class="empty" wx:if="{{!loading && !list.length}}"><view class="empty__halo"></view><text class="empty__title">账房还没有单子</text><text class="empty__sub">等食客落单后会出现在这里</text></view>
+</view>

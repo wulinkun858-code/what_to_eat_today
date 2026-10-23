@@ -1,0 +1,49 @@
+{
+  "pages": [
+    "pages/list/list",
+    "pages/detail/detail",
+    "pages/edit/edit",
+    "pages/my/my",
+    "pages/banner-manage/banner-manage",
+    "pages/comments/comments",
+    "pages/order-confirm/order-confirm",
+    "pages/my-orders/my-orders",
+    "pages/kitchen/kitchen",
+    "pages/user-manage/user-manage",
+    "pages/admin-orders/admin-orders",
+    "pages/category-manage/category-manage"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "坤坤食帖",
+    "navigationBarBackgroundColor": "#F3F5EE",
+    "backgroundColor": "#F3F5EE",
+    "backgroundColorTop": "#F3F5EE",
+    "backgroundColorBottom": "#F3F5EE",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#586E64",
+    "selectedColor": "#2E6558",
+    "backgroundColor": "#FCFDF8",
+    "list": [
+      {
+        "pagePath": "pages/list/list",
+        "text": "寻味"
+      },
+      {
+        "pagePath": "pages/comments/comments",
+        "text": "食话"
+      },
+      {
+        "pagePath": "pages/my/my",
+        "text": "小院"
+      }
+    ]
+  },
+  "style": "v2",
+  "componentFramework": "glass-easel",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

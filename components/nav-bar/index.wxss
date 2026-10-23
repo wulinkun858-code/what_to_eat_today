@@ -1,0 +1,110 @@
+@import "../../styles/tokens.wxss";
+
+/* components/nav-bar/index.wxss */
+/* 统一导航：与状态栏、胶囊按钮对齐；overlay 模式压在头图上 */
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-nav);
+  background-color: var(--bg);
+}
+
+.navbar--border::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1rpx;
+  background-color: var(--line);
+}
+
+/* 常暗页面：不跟随日间纸色 */
+.navbar--board {
+  background-color: var(--band-bg);
+  color: var(--band-ink);
+}
+
+.navbar--board .navbar__title {
+  color: var(--band-ink);
+}
+
+.navbar--board .navbar__arrow {
+  border-color: var(--band-ink);
+}
+
+/* 透明模式：顶部压一层墨色渐隐，保证浅色照片上的返回键与标题可读 */
+.navbar--overlay {
+  background-color: transparent;
+  background-image: linear-gradient(
+    180deg,
+    var(--photo-veil) 0%,
+    var(--photo-veil) 85%,
+    transparent 100%
+  );
+}
+
+.navbar__bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 88rpx = 44px 热区，视觉仍是 28rpx 的箭头 */
+.navbar__back {
+  position: absolute;
+  left: 8rpx;
+  top: 50%;
+  margin-top: -44rpx;
+  width: 88rpx;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-pill);
+  transition: transform var(--d-micro) var(--e-spring), background-color var(--d-short) var(--e-standard);
+}
+
+.navbar--overlay .navbar__back {
+  background-color: var(--photo-veil);
+}
+
+.navbar__back--press {
+  transform: scale(0.9);
+}
+
+.navbar__arrow {
+  width: 20rpx;
+  height: 20rpx;
+  border-left: 3rpx solid var(--ink);
+  border-bottom: 3rpx solid var(--ink);
+  transform: rotate(45deg) translate(2rpx, -2rpx);
+}
+
+.navbar--overlay .navbar__arrow {
+  border-color: var(--photo-ink);
+}
+
+.navbar__title {
+  max-width: 380rpx;
+  font-family: var(--font-display);
+  font-size: var(--fs-meta);
+  font-weight: 400;
+  letter-spacing: 4rpx;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.navbar--overlay .navbar__title {
+  color: var(--photo-ink);
+}
+
+.navbar--reduce .navbar__back { transition: none; }
+
+.navbar--reduce .navbar__back--press { transform: none; }

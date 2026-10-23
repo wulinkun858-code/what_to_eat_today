@@ -1,0 +1,26 @@
+<view class="page {{pageVisible ? '' : 'motion-paused'}} {{motionSettled ? 'motion-settled' : ''}} theme-{{theme}} {{reduce ? 'reduce-motion' : ''}} page-enter">
+  <nav-bar title="" />
+  <view class="editor-head"><view class="eyebrow">食帖 · {{id ? '修订篇' : '新作篇'}}</view><view class="editor-head__row"><view class="editor-title">{{id ? '再写一道好味' : '把好味写下来'}}</view><view class="editor-mark">撰</view></view><view class="editor-intro">一张影像，一份食材，记住烟火里的认真。</view></view>
+  <view class="editor-status {{loadFailed ? 'editor-status--error' : ''}}" wx:if="{{loading || loadFailed}}"><view>{{loading ? '正在展开菜谱…' : '菜谱未能载入'}}</view><view class="editor-status__hint" wx:if="{{loadFailed}}">请返回后重试，加载完成后即可保存。</view></view>
+  <view class="form">
+    <view class="form-section form-section--cover">
+      <view class="section-label"><text class="section-label__no">壹</text><text>留影</text><text class="form-sub">{{imagePreviews.length}} / {{imagesMax}} · 首张为封面</text></view>
+      <view class="image-grid"><view class="image-cell" wx:for="{{imagePreviews}}" wx:key="*this"><image class="image-thumb" src="{{item}}" mode="aspectFill" data-index="{{index}}" bindtap="onPreviewImage" /><view class="image-remove" data-index="{{index}}" catchtap="onRemoveImage" aria-label="移除此张图片"><view class="image-remove__glyph">×</view></view><view class="image-cover" wx:if="{{index === 0}}">封面</view></view><view class="image-add" wx:if="{{imagePreviews.length < imagesMax && !uploading}}" hover-class="control--press" hover-stay-time="60" bindtap="onChooseImage"><view class="image-add__plus">＋</view><text>添一张影像</text></view></view>
+      <view class="image-uploading" wx:if="{{uploading}}">影像上传中，请稍候…</view>
+    </view>
+    <view class="form-section">
+      <view class="section-label"><text class="section-label__no">贰</text><text>定名</text><text class="form-sub">一道菜，也是一段记忆</text></view>
+      <view class="form-item"><view class="form-label">菜名 <text class="required">*</text></view><input class="form-input form-input--title" placeholder="给这道菜起个名字" placeholder-class="form-ph" maxlength="{{50}}" value="{{name}}" bindinput="onNameInput" bindblur="onNameBlur" /><view class="form-error" wx:if="{{nameError}}">{{nameError}}</view></view>
+      <view class="form-item"><view class="form-label">所属品类</view><picker mode="selector" range="{{categoryNames}}" value="{{categoryIndex < 0 ? 0 : categoryIndex}}" bindchange="onCategoryChange"><view class="category-picker"><text class="category-value {{categoryIndex < 0 ? 'category-value--empty' : ''}}">{{categoryIndex < 0 ? '未分类 · 点击选择' : categoryNames[categoryIndex]}}</text><view class="chev"></view></view></picker></view>
+      <view class="form-item"><view class="form-label">菜语 <text class="form-sub">一句话介绍 · 选填</text></view><textarea class="form-textarea form-textarea--short" placeholder="例如：慢火收汁，肥而不腻" placeholder-class="form-ph" auto-height value="{{description}}" bindinput="onDescriptionInput" /></view>
+    </view>
+    <view class="form-section">
+      <view class="section-label"><text class="section-label__no">叁</text><text>成味</text><text class="form-sub">循着步骤，让好味重现</text></view>
+      <view class="form-item"><view class="form-label">备好食材 <text class="form-sub">每行一种</text></view><textarea class="form-textarea" placeholder="{{ingredientsPlaceholder}}" placeholder-class="form-ph" value="{{ingredientsText}}" bindinput="onIngredientsInput" /></view>
+      <view class="form-item"><view class="form-label">做法步骤 <text class="form-sub">每行一步</text></view><textarea class="form-textarea form-textarea--steps" placeholder="{{stepsPlaceholder}}" placeholder-class="form-ph" value="{{stepsText}}" bindinput="onStepsInput" /></view>
+      <view class="form-item"><view class="form-label">风味标签 <text class="form-sub">逗号或空格分隔</text></view><input class="form-input" placeholder="例如：家常菜 下饭菜" placeholder-class="form-ph" value="{{tagsText}}" bindinput="onTagsInput" /></view>
+    </view>
+  </view>
+  <view class="submit-bar"><view class="submit-bar__copy"><text class="submit-bar__title">食有所记</text><text class="submit-bar__sub">把这一味，留在食帖里</text></view><view class="submit-btn {{(submitting || uploading || loading || loadFailed) ? 'submit-btn--disabled' : ''}}" hover-class="{{(submitting || uploading || loading || loadFailed) ? '' : 'control--press'}}" hover-stay-time="60" bindtap="onSubmit">{{saved ? '已保存 · 返回' : (submitting ? '正在保存' : (id ? '保存修订' : '写入食帖'))}}</view></view>
+  <view class="bottom-placeholder"></view>
+</view>

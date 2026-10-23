@@ -1,0 +1,32 @@
+.page { min-height: 100vh; padding-bottom: var(--sp-6); background: var(--bg); }
+.manage-head { margin: var(--sp-4); padding-bottom: var(--sp-4); border-bottom: 1rpx solid var(--line-strong); }
+.eyebrow { color: var(--accent); font-size: var(--fs-caption); letter-spacing: 4rpx; }
+.manage-head__row { display: flex; align-items: center; justify-content: space-between; margin: var(--sp-3) 0; }
+.manage-title { font-family: var(--font-display); font-size: var(--fs-h1); color: var(--ink); letter-spacing: 4rpx; }
+.manage-count { display: flex; flex-direction: column; align-items: flex-end; color: var(--ink-3); font-size: var(--fs-caption); }
+.manage-count__num { color: var(--accent); font-size: var(--fs-h1); line-height: var(--lh-tight); }
+.manage-intro { color: var(--ink-3); font-size: var(--fs-meta); line-height: var(--lh-normal); }
+.tip { display: flex; align-items: flex-start; margin: var(--sp-4); padding: var(--sp-3); border-radius: var(--r-md); background: var(--accent-soft); color: var(--ink-2); font-size: var(--fs-caption); line-height: var(--lh-relaxed); }
+.tip__mark { flex-shrink: 0; margin-right: var(--sp-2); color: var(--accent); font-family: var(--font-display); font-size: var(--fs-body); }
+.list-heading { display: flex; justify-content: space-between; margin: var(--sp-4) var(--sp-5) var(--sp-2); font-size: var(--fs-caption); color: var(--ink-3); }
+.user-list { margin: 0 var(--sp-4); padding: 0 var(--sp-3); border: 1rpx solid var(--line); border-radius: var(--r-lg); background: var(--surface); }
+.user-row { display: flex; align-items: center; padding: var(--sp-4) 0; border-bottom: 1rpx solid var(--line); transition: opacity var(--d-short) var(--e-standard), transform var(--d-short) var(--e-standard); }
+.user-row:last-child { border-bottom: 0; }
+.control--press { opacity: .7; transform: translateX(4rpx); }
+.avatar { flex-shrink: 0; width: 80rpx; height: 80rpx; margin-right: var(--sp-3); border-radius: 50%; border: 1rpx solid var(--line); background: var(--accent-soft); }
+.avatar--ph { display: flex; align-items: center; justify-content: center; color: var(--accent); font-family: var(--font-display); font-size: var(--fs-title); }
+.user-body { flex: 1; min-width: 0; margin-right: var(--sp-2); }
+.user-name-row { display: flex; align-items: center; }
+.user-name { min-width: 0; color: var(--ink); font-size: var(--fs-body); }
+.user-self { flex-shrink: 0; margin-left: var(--sp-1); padding: 2rpx var(--sp-1); color: var(--accent); background: var(--accent-soft); border-radius: var(--r-xs); font-size: var(--fs-caption); }
+.user-meta { margin-top: var(--sp-1); font-size: var(--fs-caption); color: var(--ink-3); }
+.role-tag { flex-shrink: 0; display: flex; align-items: center; padding: var(--sp-1) var(--sp-2); border-radius: var(--r-pill); font-size: var(--fs-caption); white-space: nowrap; }
+.role-tag__seal { margin-right: var(--sp-1); font-family: var(--font-display); }
+.role-diner { color: var(--accent); background: var(--accent-soft); }
+.role-chef { color: var(--gold); background: var(--gold-soft); }
+.role-admin { color: var(--jade); background: var(--jade-soft); }
+.chev { flex-shrink: 0; width: 10rpx; height: 10rpx; margin-left: var(--sp-2); border-top: 1rpx solid var(--ink-3); border-right: 1rpx solid var(--ink-3); transform: rotate(45deg); }
+.footer { padding: var(--sp-4); text-align: center; color: var(--ink-3); font-size: var(--fs-caption); }
+.reduce-motion .user-row { transition: none; }
+
+.reduce-motion .control--press { transform: none; }

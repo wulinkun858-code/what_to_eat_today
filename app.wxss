@@ -1,0 +1,28 @@
+@import "styles/tokens.wxss";
+@import "styles/base.wxss";
+@import "styles/components.wxss";
+@import "styles/ink-motion.wxss";
+
+/**app.wxss**/
+/* ============================================================================
+   坤坤食帖 · 全局样式入口（v4）
+   ----------------------------------------------------------------------------
+   本文件不再承载具体规则，只负责装配三层样式：
+
+     styles/tokens.wxss      令牌（颜色 / 字号 / 间距 / 圆角 / 动效 / 层级）
+     styles/base.wxss        reset、页面容器、排版、动效基元
+     styles/components.wxss  书眉 / 印章 / 小票 / 卡片 / 标签 / 按钮 / 空态
+
+   新增样式时先问三个问题：
+     1) 是令牌吗？→ tokens.wxss，且必须两套主题都给值。
+     2) 跨页面复用吗？→ components.wxss。
+     3) 只服务一个页面吗？→ 该页面的 wxss，且只允许消费 var(--*)。
+
+   四条硬约束（code review 清单）：
+     1) 动效只动 transform / opacity；禁止过渡 padding / width / height / top / left。
+     2) 禁止 transition: all；禁止动画 box-shadow；禁止 backdrop-filter。
+     3) 同一元素同一时刻只能有一个 transform 所有者：
+        入场动画挂包装层，按压反馈挂目标本身。
+     4) 页面里禁止写裸 ms、裸 cubic-bezier、裸 hex；
+        时间用 --d-*，曲线用 --e-*，颜色用语义变量。
+   ============================================================================ */

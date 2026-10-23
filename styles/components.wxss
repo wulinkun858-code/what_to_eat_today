@@ -1,0 +1,331 @@
+/* styles/components.wxss */
+/* ============================================================================
+   组件层：跨页面复用的视觉件
+   ----------------------------------------------------------------------------
+   书眉 / 印章 / 小票 / 装裱 / 卡片 / 账册 / 标签 / 按钮 / 空态
+   全部只消费 styles/tokens.wxss 的令牌，页面不得再覆盖其内部尺寸。
+   ============================================================================ */
+
+/* ============================================================================
+   书眉 · 印章 · 小票 · 装裱
+   ============================================================================ */
+
+.bookband {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 160rpx;
+  padding: var(--sp-4) 0;
+  background-color: transparent;
+  color: var(--ink);
+  border-radius: 0;
+  border-bottom: 1rpx solid var(--line-strong);
+}
+
+.bookband::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1rpx;
+  width: 64rpx;
+  height: 1rpx;
+  background-color: var(--accent);
+  opacity: 0.8;
+}
+
+.bookband--sm {
+  min-height: 64rpx;
+  padding: 0 var(--sp-3);
+}
+
+.bookband__title {
+  font-size: var(--fs-h1);
+  font-weight: 400;
+  letter-spacing: 6rpx;
+  color: var(--ink);
+}
+
+.bookband--sm .bookband__title {
+  font-size: var(--fs-body);
+}
+
+.bookband__meta {
+  font-size: var(--fs-caption);
+  letter-spacing: 1rpx;
+  color: var(--ink-3);
+}
+
+.seal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 3rpx;
+  background-color: var(--vermilion);
+  color: var(--vermilion-ink);
+  font-size: var(--fs-meta);
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 0;
+  transform: rotate(-3deg);
+  box-shadow: inset 0 0 0 3rpx var(--vermilion), inset 0 0 0 4rpx var(--vermilion-ink);
+}
+
+.seal--sm {
+  width: 40rpx;
+  height: 40rpx;
+  font-size: var(--fs-badge);
+}
+
+.seal--lg {
+  width: 72rpx;
+  height: 72rpx;
+  font-size: var(--fs-h2);
+}
+
+.seal--ghost {
+  background-color: transparent;
+  color: var(--accent);
+  border: 2rpx solid var(--accent);
+  box-shadow: none;
+}
+
+.seal--press {
+  transform: scale(0.9) rotate(-3deg);
+}
+
+.stamp-in {
+  animation: stamp-in var(--d-medium) var(--e-spring) backwards;
+}
+
+@keyframes stamp-in {
+  from {
+    opacity: 0;
+    transform: scale(1.3) rotate(4deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(-3deg);
+  }
+}
+
+.slip {
+  position: relative;
+  background-color: var(--surface);
+  border: 1rpx solid var(--line-strong);
+  border-radius: var(--r-md);
+}
+
+.slip::before,
+.slip::after {
+  content: "";
+  position: absolute;
+  top: -7rpx;
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background-color: var(--bg);
+  border-bottom: 1rpx solid var(--line-strong);
+}
+
+.slip::before {
+  left: 36rpx;
+}
+
+.slip::after {
+  right: 36rpx;
+}
+
+.slip__head {
+  padding-bottom: var(--sp-2);
+  border-bottom: 1rpx solid var(--line-strong);
+}
+
+.slip__title {
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  letter-spacing: 2rpx;
+  color: var(--ink);
+}
+
+.frame {
+  position: relative;
+  padding: var(--sp-3);
+  background-color: var(--surface);
+  border: 1rpx solid var(--line-strong);
+  border-radius: var(--r-md);
+  box-shadow: inset 0 0 0 6rpx var(--surface), inset 0 0 0 7rpx var(--line);
+}
+
+/* ============================================================================
+   面与行
+   ============================================================================ */
+
+.card {
+  background-color: var(--surface);
+  border: 1rpx solid var(--line);
+  border-radius: var(--r-md);
+}
+
+.ledger {
+  background-color: var(--surface);
+  border: 1rpx solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.ledger__row {
+  display: flex;
+  align-items: center;
+  padding: 26rpx var(--sp-3);
+  border-bottom: 1rpx solid var(--line);
+}
+
+.ledger__row:last-child {
+  border-bottom: none;
+}
+
+/* ============================================================================
+   标签
+   ============================================================================ */
+
+.chip {
+  display: inline-block;
+  padding: 4rpx 14rpx;
+  margin: 0 10rpx 8rpx 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
+  color: var(--ink-2);
+  background-color: transparent;
+  border: 1rpx solid var(--line);
+  border-radius: var(--r-xs);
+}
+
+.chip--accent {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.chip--jade {
+  color: var(--jade);
+  border-color: var(--jade);
+}
+
+/* ============================================================================
+   按钮
+   ============================================================================ */
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 88rpx;
+  padding: 0 36rpx;
+  border-radius: var(--r-md);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  letter-spacing: 2rpx;
+  transition: transform var(--d-micro) var(--e-spring), opacity var(--d-micro) var(--e-standard);
+}
+
+.btn--primary {
+  background-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.btn--ghost {
+  color: var(--ink);
+  background-color: transparent;
+  border: 1rpx solid var(--line-strong);
+}
+
+.btn--seal {
+  background-color: var(--seal-bg);
+  color: var(--seal-ink);
+  font-family: var(--font-display);
+  letter-spacing: 3rpx;
+}
+
+.btn--sm {
+  height: 64rpx;
+  padding: 0 24rpx;
+  font-size: var(--fs-meta);
+}
+
+.btn:active,
+.is-pressed {
+  transform: scale(0.97);
+  opacity: 0.92;
+}
+
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: var(--r-xs);
+  background-color: var(--surface-2);
+  border: 1rpx solid var(--line);
+  transition: transform var(--d-micro) var(--e-spring);
+}
+
+.icon-btn:active {
+  transform: scale(0.9);
+}
+
+/* ============================================================================
+   空态
+   ============================================================================ */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 60rpx;
+  text-align: center;
+}
+
+.ink-halo,
+.empty__halo,
+.empty__ring {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  background-image: radial-gradient(circle at 42% 38%, var(--halo), transparent 68%),
+    radial-gradient(circle at 62% 64%, var(--accent-soft), transparent 62%);
+}
+
+.empty__halo,
+.empty__ring {
+  margin-bottom: var(--sp-3);
+}
+
+.empty__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  letter-spacing: 1rpx;
+  color: var(--ink-2);
+}
+
+.empty__sub {
+  margin-top: var(--sp-1);
+  font-size: var(--fs-meta);
+  color: var(--ink-3);
+  line-height: var(--lh-relaxed);
+}
+
+/* 空态主行动：把"没有内容"变成"下一步做什么" */
+.empty__action {
+  margin-top: var(--sp-3);
+  padding: 12rpx 32rpx;
+  font-size: var(--fs-meta);
+  letter-spacing: 2rpx;
+  color: var(--accent);
+  border: 1rpx solid var(--accent);
+  border-radius: var(--r-pill);
+}

@@ -1,0 +1,10 @@
+<view class="page {{pageVisible ? '' : 'motion-paused'}} {{motionSettled ? 'motion-settled' : ''}} theme-{{theme}} {{reduce ? 'reduce-motion' : ''}} page-enter">
+  <nav-bar title="" />
+  <view class="manage-head"><view class="eyebrow">食帖有序 · 风味目录</view><view class="manage-head__row"><view class="manage-title">分门，别味。</view><view class="manage-count"><text class="manage-count__num num">{{list.length}}</text><text>类人间滋味</text></view></view><view class="manage-intro">为每一道好菜，寻一个恰好的位置。</view></view>
+  <view class="category-heading"><text>首页品类目录</text><text>点击可编辑 ↗</text></view>
+  <view class="cat-list"><view class="cat-row" wx:for="{{list}}" wx:key="_id" hover-class="control--press" hover-stay-time="60" data-index="{{index}}" bindtap="onItemTap"><view class="cat-index num">{{index < 9 ? '0' : ''}}{{index + 1}}</view><view class="cat-body"><text class="cat-name text-ellipsis">{{item.name}}</text><view class="cat-rule"></view></view><view class="cat-edit">编辑</view><view class="chev"></view></view></view>
+  <view class="add" wx:if="{{!loading}}" hover-class="control--press" hover-stay-time="60" bindtap="onAddTap"><view class="add__plus">＋</view><view><view class="add__title">添一个新分类</view><view class="add__sub">让风味，各有所归</view></view><text class="add__arrow">↗</text></view>
+  <view class="tip"><text class="tip__mark">知</text><text>删除分类后，其中的菜品会自动归入「未分类」，菜品本身保留。</text></view>
+  <view class="loading" wx:if="{{loading}}">正在展开目录…</view>
+  <view class="empty" wx:if="{{!loading && !list.length}}"><view class="empty__halo"></view><text class="empty__title">还没有分类</text><text class="empty__sub">点击上方按钮，创建第一个品类</text></view>
+</view>

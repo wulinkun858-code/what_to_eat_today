@@ -1,0 +1,9 @@
+<view class="page {{pageVisible ? '' : 'motion-paused'}} {{motionSettled ? 'motion-settled' : ''}} theme-{{theme}} {{reduce ? 'reduce-motion' : ''}} page-enter">
+  <nav-bar title="" />
+  <view class="manage-head"><view class="eyebrow">食帖有序 · 人与角色</view><view class="manage-head__row"><view class="manage-title">伙计名册</view><view class="manage-count"><text class="manage-count__num num">{{total}}</text><text>位同席人</text></view></view><view class="manage-intro">各司其事，共成一席好味。</view></view>
+  <view class="tip"><text class="tip__mark">知</text><text>点选成员可授权角色；变更立即生效，自己的角色不可修改。</text></view>
+  <view class="list-heading"><text>成员 / 最近活跃</text><text>当前角色</text></view>
+  <view class="user-list"><view class="user-row" wx:for="{{list}}" wx:key="openid" hover-class="control--press" hover-stay-time="60" data-index="{{index}}" bindtap="onUserTap"><image wx:if="{{item.avatarFileID}}" class="avatar" src="{{item.avatarFileID}}" mode="aspectFill" /><view wx:else class="avatar avatar--ph">{{item.nickname[0] || '客'}}</view><view class="user-body"><view class="user-name-row"><text class="user-name text-ellipsis">{{item.nickname}}</text><text class="user-self" wx:if="{{item.self}}">我</text></view><view class="user-meta">{{item.activeText}}</view></view><view class="role-tag {{item.roleCls}}"><text class="role-tag__seal">{{item.roleCls === 'role-chef' ? '勺' : (item.roleCls === 'role-admin' ? '掌' : '食')}}</text><text>{{item.roleLabel}}</text></view><view class="chev"></view></view></view>
+  <view class="footer" wx:if="{{list.length}}"><text wx:if="{{loading}}">正在展开下一页…</text><text wx:elif="{{noMore}}">名册已至末页</text></view>
+  <view class="empty" wx:if="{{!loading && !list.length}}"><view class="empty__halo"></view><text class="empty__title">名册还是空的</text><text class="empty__sub">用户打开小程序后会自动登记</text></view>
+</view>

@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "伙计名册",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "nav-bar": "/components/nav-bar/index"
+  },
+  "navigationStyle": "custom"
+}
