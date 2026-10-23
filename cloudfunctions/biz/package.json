@@ -1,0 +1,9 @@
+{
+  "name": "biz",
+  "version": "1.0.0",
+  "description": "坤坤菜单业务云函数：角色/订单/消息/制作列表",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
