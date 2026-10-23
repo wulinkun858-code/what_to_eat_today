@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>坤坤食帖 · 圆润组件预览</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #e7ece3; color: #213f36; font-family: "Microsoft YaHei", sans-serif; }
+    main { width: 1261px; padding: 24px 16px 16px; margin: auto; }
+    header { display: flex; justify-content: space-between; align-items: baseline; padding: 0 10px 22px; }
+    h1 { font-family: "Songti SC", "SimSun", serif; font-size: 26px; font-weight: 400; letter-spacing: 4px; margin: 0; }
+    header p { margin: 0; font-size: 12px; color: #53695e; }
+    .pages { display: grid; grid-template-columns: repeat(3, 399px); gap: 16px; }
+    iframe { display: block; width: 399px; height: 836px; border: 0; border-radius: 47px; box-shadow: 0 16px 35px #233b2418; }
+    .caption { text-align: center; font-size: 12px; letter-spacing: 2px; color: #53695e; margin: 18px 0 0; }
+  </style>
+</head>
+<body>
+  <main>
+    <header><h1>坤坤食帖 · 温润青瓷</h1><p>真实模板转译 · 示例数据 · 浏览器预览</p></header>
+    <div class="pages">
+      <section><iframe id="rounded-home" title="圆润首页" src="ink-preview.html?embed=1&amp;page=list&amp;theme=paper&amp;reduce=1"></iframe><p class="caption">寻味 · 圆角图像与胶囊导航</p></section>
+      <section><iframe id="rounded-comments" title="圆润食话" src="ink-preview.html?embed=1&amp;page=comments&amp;theme=paper&amp;reduce=1"></iframe><p class="caption">食话 · 四角统一的札记</p></section>
+      <section><iframe id="rounded-my" title="圆润小院" src="ink-preview.html?embed=1&amp;page=my&amp;theme=paper&amp;reduce=1"></iframe><p class="caption">小院 · 留出呼吸的功能卡片</p></section>
+    </div>
+  </main>
+</body>
+</html>

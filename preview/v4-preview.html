@@ -1,0 +1,2985 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>坤坤食帖 · v4 重构预览</title>
+<style>
+/* styles/tokens.wxss */
+/* ============================================================================
+   坤坤食帖 · 设计令牌 v4（唯一真源）
+   ----------------------------------------------------------------------------
+   三层秩序：本次重构的核心是把"逐处调参"改成"消费令牌"。
+
+   1) 颜色：只按"角色"命名（bg / surface / ink / line / accent），
+      主题只换值不换名；纸色主题的 ink-3 已提升到 5.02:1，
+      暗色主题 ink-3 在 surface 上 5.33:1，均满足 WCAG AA。
+   2) 字号：7 档 + 1 档角标（10px 仅用于计数徽标，禁止用于正文）。
+   3) 间距：4pt 网格（8/16/24/32/48/64），6px 只允许用于图标与文字的贴边微调。
+   4) 圆角：4 档（12/20/28/pill），删除 4/6/8/10/16/18/24 等中间值。
+   5) 动效：5 档时长 + 3 条曲线。禁止在页面里写裸 ms 与裸 cubic-bezier。
+
+   工程约束：微信自定义组件默认 styleIsolation: isolated，
+   app.wxss 的规则不会进入组件内部，组件必须各自 @import 本文件。
+   ============================================================================ */
+
+.screen {
+  /* ---------- 字体 ---------- */
+  --font-display: "Songti SC", "STSong", "Noto Serif CJK SC", "Source Han Serif SC",
+    "SimSun", serif;
+  --font-body: "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  --font-num: "DIN Alternate", "Bahnschrift", "Arial Narrow", "PingFang SC", sans-serif;
+
+  /* ---------- 字号（7 档 + 角标） ---------- */
+  --fs-badge: 10px;   /* 仅计数徽标 / 印章小字 */
+  --fs-caption: 11px; /* 时间戳、辅助说明 */
+  --fs-meta: 12px;    /* 次级信息、标签 */
+  --fs-body: 14px;    /* 正文 */
+  --fs-title: 15px;   /* 卡片标题、列表主文 */
+  --fs-h2: 18px;      /* 区块标题 */
+  --fs-h1: 24px;      /* 页面主标题、菜名 */
+  --fs-display: 36px; /* 刊头 */
+
+  --lh-tight: 1.1;
+  --lh-snug: 1.3;
+  --lh-normal: 1.6;
+  --lh-relaxed: 1.8;
+
+  /* ---------- 间距（4pt 网格） ---------- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+
+  /* ---------- 圆角（4 档） ---------- */
+  --r-xs: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-pill: 499.5px;
+
+  /* ---------- 动效（5 档时长 / 3 条曲线） ---------- */
+  --d-micro: 120ms;  /* 按压、颜色微变 */
+  --d-short: 200ms;  /* 按钮、标签切换 */
+  --d-medium: 280ms; /* 位移、让位、展开 */
+  --d-long: 420ms;   /* 区域变化、轮播、页面淡入 */
+  --d-sweep: 560ms;  /* 主题扫过（唯一允许超过 500ms 的场景） */
+  --d-loop: 900ms;   /* 循环动画：旋转、搬运中 */
+  --d-breathe: 1600ms; /* 循环动画：骨架屏呼吸 */
+
+  --e-standard: cubic-bezier(0.2, 0, 0, 1);
+  --e-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --e-spring: cubic-bezier(0.2, 1.12, 0.4, 1); /* 过冲约 6%，只给 44px 以内的小元素 */
+
+  /* ---------- 层级 ---------- */
+  --z-nav: 100;
+  --z-dock: 100;
+  --z-sheet: 90;
+  --z-float: 80;
+  --z-reveal: 9999;
+
+  /* ---------- 颜色：宣纸（默认，保证首帧就有值） ---------- */
+  --bg: #EFE6D3;
+  --bg-2: #E7DCC7;
+  --surface: #F8F1E1;
+  --surface-2: #EDE2CC;
+  --ink: #1B1712;
+  --ink-2: #5E5346;
+  --ink-3: #6B5F4F; /* v3: #7C7060，仅 3.90:1；现 5.02:1 */
+  --line: rgba(28, 23, 18, 0.12);
+  --line-strong: rgba(28, 23, 18, 0.28);
+  --band-bg: #1B1712;
+  --band-ink: #F6EEDC;
+  --band-ink-2: rgba(246, 238, 220, 0.62);
+  --band-ink-3: rgba(246, 238, 220, 0.42);
+  --band-ink-4: rgba(246, 238, 220, 0.16);
+  --band-line: rgba(246, 238, 220, 0.22);
+  --band-fill: rgba(246, 238, 220, 0.06);
+  --accent: #A93218; /* v3: #B4381F，4.80:1；现 5.36:1 */
+  --accent-ink: #FFF8EC;
+  --accent-soft: rgba(169, 50, 24, 0.1);
+  --jade: #1E6B58;
+  --jade-soft: rgba(30, 107, 88, 0.1);
+  --gold: #A67C2E;
+  --gold-soft: rgba(166, 124, 46, 0.12);
+  --seal-bg: #B4381F;
+  --seal-ink: #FFF8EC;
+  --halo: rgba(27, 23, 18, 0.14);
+  --ok: #2E6B4F;
+  --info: #2F5C8A;
+  --warn: #8A5C10;
+  --danger: #A32B1E;
+  --danger-soft: rgba(163, 43, 30, 0.12);
+  --shadow-sm: 0 1px 4px rgba(60, 44, 26, 0.06);
+  --shadow-md: 0 8px 20px rgba(60, 44, 26, 0.1);
+}
+
+/* 显式类：页面根节点会挂 .theme-paper / .theme-ink */
+.theme-paper {
+  --bg: #EFE6D3;
+  --bg-2: #E7DCC7;
+  --surface: #F8F1E1;
+  --surface-2: #EDE2CC;
+  --ink: #1B1712;
+  --ink-2: #5E5346;
+  --ink-3: #6B5F4F;
+  --line: rgba(28, 23, 18, 0.12);
+  --line-strong: rgba(28, 23, 18, 0.28);
+  --band-bg: #1B1712;
+  --band-ink: #F6EEDC;
+  --band-ink-2: rgba(246, 238, 220, 0.62);
+  --band-ink-3: rgba(246, 238, 220, 0.42);
+  --band-ink-4: rgba(246, 238, 220, 0.16);
+  --accent: #A93218;
+  --accent-ink: #FFF8EC;
+  --accent-soft: rgba(169, 50, 24, 0.1);
+  --jade: #1E6B58;
+  --jade-soft: rgba(30, 107, 88, 0.1);
+  --gold: #A67C2E;
+  --gold-soft: rgba(166, 124, 46, 0.12);
+  --seal-bg: #B4381F;
+  --seal-ink: #FFF8EC;
+  --halo: rgba(27, 23, 18, 0.14);
+  --ok: #2E6B4F;
+  --info: #2F5C8A;
+  --warn: #8A5C10;
+  --danger: #A32B1E;
+  --danger-soft: rgba(163, 43, 30, 0.12);
+  --shadow-sm: 0 1px 4px rgba(60, 44, 26, 0.06);
+  --shadow-md: 0 8px 20px rgba(60, 44, 26, 0.1);
+}
+
+/* 墨夜：暖黑纸，不是纯黑；朱砂与玉青提亮，印章仍保持朱砂白文 */
+.theme-ink {
+  --bg: #11100D;
+  --bg-2: #181611;
+  --surface: #1D1A14;
+  --surface-2: #26221A;
+  --ink: #F1E7D3;
+  --ink-2: #BFB29B;
+  --ink-3: #9A8D77; /* v3: #8F836E，在 surface 上仅 4.66:1；现 5.33:1 */
+  --line: rgba(241, 231, 211, 0.11);
+  --line-strong: rgba(241, 231, 211, 0.26);
+  --band-bg: #221E17;
+  --band-ink: #F1E7D3;
+  --band-ink-2: rgba(241, 231, 211, 0.64);
+  --band-ink-3: rgba(241, 231, 211, 0.44);
+  --band-ink-4: rgba(241, 231, 211, 0.16);
+  --band-line: rgba(241, 231, 211, 0.22);
+  --band-fill: rgba(241, 231, 211, 0.06);
+  --accent: #D6543A;
+  --accent-ink: #171009;
+  --accent-soft: rgba(214, 84, 58, 0.16);
+  --jade: #6FBFA0;
+  --jade-soft: rgba(111, 191, 160, 0.14);
+  --gold: #D4AF37;
+  --gold-soft: rgba(212, 175, 55, 0.14);
+  --seal-bg: #B4381F;
+  --seal-ink: #FFF8EC;
+  --halo: rgba(241, 231, 211, 0.12);
+  --ok: #7FCFAF;
+  --info: #8FB3D9;
+  --warn: #E2B866;
+  --danger: #FF7A66;
+  --danger-soft: rgba(255, 122, 102, 0.16);
+  --shadow-sm: 0 1px 5px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 9px 22px rgba(0, 0, 0, 0.55);
+}
+
+/* 灶房常暗：日/夜主题下都保持灯下墨板 */
+.page.page--board {
+  --bg: #11100D;
+  --bg-2: #181611;
+  --surface: #1D1A14;
+  --surface-2: #26221A;
+  --ink: #F1E7D3;
+  --ink-2: #BFB29B;
+  --ink-3: #9A8D77;
+  --line: rgba(241, 231, 211, 0.11);
+  --line-strong: rgba(241, 231, 211, 0.26);
+  --band-bg: #221E17;
+  --band-ink: #F1E7D3;
+  --band-ink-2: rgba(241, 231, 211, 0.64);
+  --band-ink-3: rgba(241, 231, 211, 0.44);
+  --band-ink-4: rgba(241, 231, 211, 0.16);
+  --band-line: rgba(241, 231, 211, 0.22);
+  --band-fill: rgba(241, 231, 211, 0.06);
+  --accent: #D6543A;
+  --accent-ink: #171009;
+  --accent-soft: rgba(214, 84, 58, 0.16);
+  --jade: #6FBFA0;
+  --jade-soft: rgba(111, 191, 160, 0.14);
+  --gold: #D4AF37;
+  --gold-soft: rgba(212, 175, 55, 0.14);
+  --seal-bg: #B4381F;
+  --seal-ink: #FFF8EC;
+  --halo: rgba(241, 231, 211, 0.12);
+  --ok: #7FCFAF;
+  --info: #8FB3D9;
+  --warn: #E2B866;
+  --danger: #FF7A66;
+  --danger-soft: rgba(255, 122, 102, 0.16);
+  --shadow-sm: 0 1px 5px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 9px 22px rgba(0, 0, 0, 0.55);
+}
+
+/* 暗板上的白纸单：只翻转纸张/文字/线色，不动 --bg，票据缺口仍露出暗板 */
+.paper-scope {
+  --surface: #F1E6D0;
+  --surface-2: #E6D9C1;
+  --ink: #1B1712;
+  --ink-2: #5E5346;
+  --ink-3: #6B5F4F;
+  --line: rgba(28, 23, 18, 0.12);
+  --line-strong: rgba(28, 23, 18, 0.3);
+  --accent: #A93218;
+  --accent-ink: #FFF8EC;
+  --seal-bg: #B4381F;
+  --seal-ink: #FFF8EC;
+  --jade: #1E6B58;
+  --gold: #A67C2E;
+  color: var(--ink);
+}
+
+/* styles/base.wxss */
+/* ============================================================================
+   基础层：reset、页面容器、排版、动效基元
+   ----------------------------------------------------------------------------
+   只放"与业务无关"的规则。任何带具体页面语义的样式都不应写在这里。
+   ============================================================================ */
+
+.screen {
+  background-color: var(--bg);
+  color: var(--ink);
+  font-size: var(--fs-body);
+  line-height: var(--lh-normal);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+view,
+text,
+input,
+textarea,
+button,
+scroll-view,
+swiper,
+swiper-item {
+  box-sizing: border-box;
+}
+
+.page {
+  min-height: 100vh;
+  background-color: var(--bg);
+  background-image: url("/assets/textures/paper-grain.png");
+  background-repeat: repeat;
+  background-size: 90px 90px;
+  color: var(--ink);
+}
+
+/* ============================================================================
+   排版
+   ============================================================================ */
+
+.serif,
+.display,
+.h1,
+.h2,
+.bookband__title,
+.seal,
+.slip__title {
+  font-family: var(--font-display);
+}
+
+.display {
+  font-size: var(--fs-display);
+  line-height: var(--lh-tight);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--ink);
+}
+
+.h1 {
+  font-size: var(--fs-h1);
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--ink);
+}
+
+.h2 {
+  font-size: var(--fs-h2);
+  line-height: 1.35;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--ink);
+}
+
+.body {
+  font-size: var(--fs-body);
+  line-height: var(--lh-relaxed);
+  color: var(--ink-2);
+}
+
+.caption {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
+  color: var(--ink-3);
+}
+
+.kicker,
+.eyebrow {
+  font-family: var(--font-display);
+  font-size: var(--fs-caption);
+  line-height: 1.4;
+  letter-spacing: 2px;
+  color: var(--ink-3);
+}
+
+.num {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.25px;
+}
+
+.text-ellipsis {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.clamp2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 竖排题签：只用于单字/短词的装饰，不承载长文本（长文本用 .section-head） */
+.vlabel {
+  width: 1em;
+  font-family: var(--font-display);
+  font-size: var(--fs-caption);
+  line-height: 1.16;
+  letter-spacing: 1px;
+  word-break: break-all;
+  color: var(--ink-3);
+}
+
+/* 分区标题：替代原先的竖排题签，横排可读性更好 */
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 0 var(--sp-2);
+}
+
+.section-head__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--ink);
+}
+
+.section-head__sub {
+  font-size: var(--fs-caption);
+  letter-spacing: 0.5px;
+  color: var(--ink-3);
+}
+
+/* ============================================================================
+   线与面
+   ============================================================================ */
+
+.rule {
+  height: 0.5px;
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    var(--line-strong) 12%,
+    var(--line-strong) 88%,
+    transparent
+  );
+}
+
+.divider {
+  height: 0.5px;
+  background-color: var(--line);
+  transform: scaleY(0.5);
+}
+
+/* 底部渐隐：让内容从 Dock 下方自然淡出 */
+.tab-scrim {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(98px + env(safe-area-inset-bottom));
+  background-image: linear-gradient(180deg, transparent 0%, var(--bg) 72%);
+  pointer-events: none;
+  z-index: 85;
+}
+
+/* 页面底部安全留白：Dock 高 56px + 上下 8px + 呼吸 16px */
+.page-room {
+  height: calc(88px + env(safe-area-inset-bottom));
+}
+
+/* ============================================================================
+   动效基元
+   ----------------------------------------------------------------------------
+   规则：同一元素同一时刻只能有一个 transform 所有者。
+   入场用 .enter 挂在包装层；按压反馈挂在目标本身。
+   ============================================================================ */
+
+.enter {
+  animation: enter var(--d-long) var(--e-decelerate) backwards;
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.enter--fade,
+.page-enter {
+  animation: fade-in var(--d-short) var(--e-standard) backwards;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.enter--pop {
+  animation: pop-in var(--d-medium) var(--e-spring) backwards;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.bar-up {
+  animation: bar-up var(--d-medium) var(--e-decelerate) backwards;
+}
+
+@keyframes bar-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* 骨架屏：透明度呼吸，比位移渐变省一个数量级的绘制 */
+.skeleton {
+  background-color: var(--surface-2);
+  border-radius: var(--r-xs);
+  animation: skeleton-pulse var(--d-breathe) ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.spin {
+  animation: spin var(--d-loop) linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 减弱动效：功能不变，只去掉位移与弹性 */
+.reduce-motion .enter,
+.reduce-motion .enter--pop,
+.reduce-motion .page-enter,
+.reduce-motion .bar-up,
+.reduce-motion .stamp-in {
+  animation: fade-in var(--d-micro) linear backwards;
+}
+
+.reduce-motion .skeleton,
+.reduce-motion .spin,
+.reduce-motion .feed-foot__spin {
+  animation: none !important;
+}
+
+.reduce-motion .card,
+.reduce-motion .dish-card,
+.reduce-motion .tab-item,
+.reduce-motion .tab-pill,
+.reduce-motion .cat {
+  transition: none !important;
+}
+
+/* styles/components.wxss */
+/* ============================================================================
+   组件层：跨页面复用的视觉件
+   ----------------------------------------------------------------------------
+   书眉 / 印章 / 小票 / 装裱 / 卡片 / 账册 / 标签 / 按钮 / 空态
+   全部只消费 styles/tokens.wxss 的令牌，页面不得再覆盖其内部尺寸。
+   ============================================================================ */
+
+/* ============================================================================
+   书眉 · 印章 · 小票 · 装裱
+   ============================================================================ */
+
+.bookband {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 0 var(--sp-4);
+  background-color: var(--band-bg);
+  color: var(--band-ink);
+  border-radius: var(--r-md);
+}
+
+.bookband::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 3px;
+  height: 0.5px;
+  background-color: var(--band-ink);
+  opacity: 0.28;
+}
+
+.bookband--sm {
+  min-height: 32px;
+  padding: 0 var(--sp-3);
+}
+
+.bookband__title {
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--band-ink);
+}
+
+.bookband--sm .bookband__title {
+  font-size: var(--fs-body);
+}
+
+.bookband__meta {
+  font-size: var(--fs-caption);
+  letter-spacing: 0.5px;
+  color: var(--band-ink-2);
+}
+
+.seal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-xs);
+  background-color: var(--seal-bg);
+  color: var(--seal-ink);
+  font-size: var(--fs-meta);
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 0;
+  transform: rotate(-3deg);
+  box-shadow: inset 0 0 0 1px rgba(255, 248, 236, 0.18);
+}
+
+.seal--sm {
+  width: 20px;
+  height: 20px;
+  font-size: var(--fs-badge);
+}
+
+.seal--lg {
+  width: 36px;
+  height: 36px;
+  font-size: var(--fs-h2);
+}
+
+.seal--ghost {
+  background-color: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  box-shadow: none;
+}
+
+.seal--press {
+  transform: scale(0.9) rotate(-3deg);
+}
+
+.stamp-in {
+  animation: stamp-in var(--d-medium) var(--e-spring) backwards;
+}
+
+@keyframes stamp-in {
+  from {
+    opacity: 0;
+    transform: scale(1.3) rotate(4deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(-3deg);
+  }
+}
+
+.slip {
+  position: relative;
+  background-color: var(--surface);
+  border: 0.5px solid var(--line-strong);
+  border-radius: var(--r-md);
+}
+
+.slip::before,
+.slip::after {
+  content: "";
+  position: absolute;
+  top: -5.5px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background-color: var(--bg);
+  border-bottom: 0.5px solid var(--line-strong);
+}
+
+.slip::before {
+  left: 18px;
+}
+
+.slip::after {
+  right: 18px;
+}
+
+.slip__head {
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px dashed var(--line-strong);
+}
+
+.slip__title {
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--ink);
+}
+
+.frame {
+  position: relative;
+  padding: var(--sp-3);
+  background-color: var(--surface);
+  border: 0.5px solid var(--line-strong);
+  border-radius: var(--r-md);
+  box-shadow: inset 0 0 0 3px var(--surface), inset 0 0 0 3.5px var(--line);
+}
+
+/* ============================================================================
+   面与行
+   ============================================================================ */
+
+.card {
+  background-color: var(--surface);
+  border: 0.5px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+.ledger {
+  background-color: var(--surface);
+  border: 0.5px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.ledger__row {
+  display: flex;
+  align-items: center;
+  padding: 13px var(--sp-3);
+  border-bottom: 0.5px dashed var(--line);
+}
+
+.ledger__row:last-child {
+  border-bottom: none;
+}
+
+/* ============================================================================
+   标签
+   ============================================================================ */
+
+.chip {
+  display: inline-block;
+  padding: 2px 7px;
+  margin: 0 5px 4px 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
+  color: var(--ink-2);
+  background-color: transparent;
+  border: 0.5px solid var(--line);
+  border-radius: var(--r-xs);
+}
+
+.chip--accent {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.chip--jade {
+  color: var(--jade);
+  border-color: var(--jade);
+}
+
+/* ============================================================================
+   按钮
+   ============================================================================ */
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: var(--r-md);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  letter-spacing: 1px;
+  transition: transform var(--d-micro) var(--e-spring), opacity var(--d-micro) var(--e-standard);
+}
+
+.btn--primary {
+  background-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.btn--ghost {
+  color: var(--ink);
+  background-color: transparent;
+  border: 0.5px solid var(--line-strong);
+}
+
+.btn--seal {
+  background-color: var(--seal-bg);
+  color: var(--seal-ink);
+  font-family: var(--font-display);
+  letter-spacing: 1.5px;
+}
+
+.btn--sm {
+  height: 32px;
+  padding: 0 12px;
+  font-size: var(--fs-meta);
+}
+
+.btn:active,
+.is-pressed {
+  transform: scale(0.97);
+  opacity: 0.92;
+}
+
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-xs);
+  background-color: var(--surface-2);
+  border: 0.5px solid var(--line);
+  transition: transform var(--d-micro) var(--e-spring);
+}
+
+.icon-btn:active {
+  transform: scale(0.9);
+}
+
+/* ============================================================================
+   空态
+   ============================================================================ */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 30px;
+  text-align: center;
+}
+
+.ink-halo,
+.empty__halo,
+.empty__ring {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-image: radial-gradient(circle at 42% 38%, var(--halo), transparent 68%),
+    radial-gradient(circle at 62% 64%, var(--accent-soft), transparent 62%);
+}
+
+.empty__halo,
+.empty__ring {
+  margin-bottom: var(--sp-3);
+}
+
+.empty__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  letter-spacing: 0.5px;
+  color: var(--ink-2);
+}
+
+.empty__sub {
+  margin-top: var(--sp-1);
+  font-size: var(--fs-meta);
+  color: var(--ink-3);
+  line-height: var(--lh-relaxed);
+}
+
+/* 空态主行动：把"没有内容"变成"下一步做什么" */
+.empty__action {
+  margin-top: var(--sp-3);
+  padding: 6px 16px;
+  font-size: var(--fs-meta);
+  letter-spacing: 1px;
+  color: var(--accent);
+  border: 0.5px solid var(--accent);
+  border-radius: var(--r-pill);
+}
+
+
+
+/* custom-tab-bar/index.wxss */
+/* ============================================================================
+   底部 Dock（v4）
+   ----------------------------------------------------------------------------
+   一次结构合并：原先是 tab 栏（52px）+ 点菜单条（48px）+ 写菜牌 FAB
+   三个 fixed 层叠压，互相遮挡且吃掉约 130px 视口。
+   现在合成单层：左侧书签导航 + 右侧常驻点菜单入口。
+
+   注意：自定义组件默认 styleIsolation: isolated，
+   app.wxss 的规则不会进入组件内部，必须自己 @import 令牌。
+   ============================================================================ */
+
+.dock {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(8px + env(safe-area-inset-bottom));
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  background-color: var(--band-bg);
+  border: 0.5px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  z-index: var(--z-dock);
+  animation: dock-in var(--d-long) var(--e-decelerate) backwards;
+}
+
+/* 装订线：顶部第二道细线 */
+.dock::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 3.5px;
+  height: 0.5px;
+  background-color: var(--band-ink);
+  opacity: 0.14;
+}
+
+@keyframes dock-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* ---------- 书签导航 ---------- */
+
+.dock__tabs {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  display: flex;
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+/* 滑动书签：只动 transform，宽度恒为 1/3 */
+.dock__mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 33.3333%;
+  background-color: var(--seal-bg);
+  border-radius: var(--r-md);
+  transition: transform var(--d-medium) var(--e-standard);
+  will-change: transform;
+}
+
+.dock__tab {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.dock__tab-text {
+  font-size: var(--fs-meta);
+  letter-spacing: 1px;
+  color: var(--band-ink);
+  opacity: 0.46;
+  transition: opacity var(--d-short) var(--e-standard), color var(--d-short) var(--e-standard);
+}
+
+.dock__tab--on .dock__tab-text {
+  color: var(--seal-ink);
+  opacity: 1;
+  font-weight: 600;
+}
+
+/* ---------- 常驻点菜单 ---------- */
+
+.dock__cart {
+  flex-shrink: 0;
+  width: 108px;
+  height: 48px;
+  margin-left: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--band-fill);
+  border: 0.5px solid var(--band-line);
+  border-radius: var(--r-md);
+  color: var(--band-ink-2);
+  transition: background-color var(--d-short) var(--e-standard),
+    border-color var(--d-short) var(--e-standard), color var(--d-short) var(--e-standard),
+    transform var(--d-micro) var(--e-spring);
+}
+
+.dock__cart--on {
+  background-color: var(--seal-bg);
+  border-color: var(--seal-bg);
+  color: var(--seal-ink);
+}
+
+.dock__cart--press {
+  transform: scale(0.97);
+}
+
+.dock__cart-count {
+  font-size: var(--fs-title);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.dock__cart-label {
+  margin-left: 5px;
+  font-family: var(--font-display);
+  font-size: var(--fs-caption);
+  letter-spacing: 1px;
+}
+
+/* ---------- 减弱动效 ---------- */
+
+.dock--reduce {
+  animation: none;
+}
+
+.dock--reduce .dock__mark,
+.dock--reduce .dock__tab-text,
+.dock--reduce .dock__cart {
+  transition: none;
+}
+
+
+
+/* components/nav-bar/index.wxss */
+/* 统一导航：与状态栏、胶囊按钮对齐；overlay 模式压在头图上 */
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-nav);
+  background-color: var(--bg);
+}
+
+.navbar--border::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0.5px;
+  background-color: var(--line);
+}
+
+/* 常暗页面：不跟随日间纸色 */
+.navbar--board {
+  background-color: var(--band-bg);
+  color: var(--band-ink);
+}
+
+.navbar--board .navbar__title {
+  color: var(--band-ink);
+}
+
+.navbar--board .navbar__arrow {
+  border-color: var(--band-ink);
+}
+
+/* 透明模式：顶部压一层墨色渐隐，保证浅色照片上的返回键与标题可读 */
+.navbar--overlay {
+  background-color: transparent;
+  background-image: linear-gradient(
+    180deg,
+    rgba(17, 16, 13, 0.46) 0%,
+    rgba(17, 16, 13, 0.18) 62%,
+    rgba(17, 16, 13, 0) 100%
+  );
+}
+
+.navbar__bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 44px = 44px 热区，视觉仍是 14px 的箭头 */
+.navbar__back {
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  margin-top: -22px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-pill);
+  transition: transform var(--d-micro) var(--e-spring), background-color var(--d-short) var(--e-standard);
+}
+
+.navbar--overlay .navbar__back {
+  background-color: rgba(17, 16, 13, 0.34);
+}
+
+.navbar__back--press {
+  transform: scale(0.9);
+}
+
+.navbar__arrow {
+  width: 10px;
+  height: 10px;
+  border-left: 1.5px solid var(--ink);
+  border-bottom: 1.5px solid var(--ink);
+  transform: rotate(45deg) translate(1px, -1px);
+}
+
+.navbar--overlay .navbar__arrow {
+  border-color: var(--seal-ink);
+}
+
+.navbar__title {
+  max-width: 190px;
+  font-family: var(--font-display);
+  font-size: var(--fs-title);
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.navbar--overlay .navbar__title {
+  color: var(--seal-ink);
+}
+
+.list-scope /* pages/list/list.wxss */
+/* ============================================================================
+   首页：墨带书眉 + 食帖刊头 + 双列菜牌 + 单层 Dock
+   ----------------------------------------------------------------------------
+   v4 结构变化：
+     1) 刊头 42px 两行 → 36px 单行，首屏多露一排菜；
+     2) 轮播 180px → 150px，非选中项缩放从 .94 收到 .96；
+     3) 品类切换不再过渡 padding（避免布局重排），改为伪元素铺色；
+     4) 点菜单与写菜牌并入 Dock 与刊头，删除三层叠压；
+     5) 卡片入场动画移到 .dish-cell，按压反馈独占 .dish-card 的 transform。
+   ============================================================================ */
+
+.page{
+  min-height: 100vh;
+  padding-bottom: calc(88px + env(safe-area-inset-bottom));
+}
+.list-scope /* ============================================================================
+   墨带书眉
+   ============================================================================ */
+.nav{
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  background-color: var(--band-bg);
+  color: var(--band-ink);
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+}
+.list-scope .nav::after{
+  content: "";
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 0;
+  height: 0.5px;
+  background-color: var(--seal-bg);
+  opacity: 0;
+  transition: opacity var(--d-short) var(--e-standard);
+}
+.list-scope .nav--scrolled::after{
+  opacity: 1;
+}
+.list-scope .nav__bar{
+  display: flex;
+  align-items: center;
+  padding: 0 110px 0 14px;
+}
+.list-scope .theme-seal{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin-right: 8px;
+  border-radius: var(--r-xs);
+  background-color: var(--seal-bg);
+  color: var(--seal-ink);
+  font-family: var(--font-display);
+  font-size: var(--fs-meta);
+  transform: rotate(-3deg);
+  box-shadow: inset 0 0 0 1px rgba(255, 248, 236, 0.18);
+  transition: transform var(--d-short) var(--e-spring);
+}
+.list-scope .theme-seal__char{
+  line-height: 1;
+}
+.list-scope .nav__brand{
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.list-scope .nav__brand-main{
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--band-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.list-scope .nav__brand-sub{
+  margin-top: 1px;
+  font-size: var(--fs-caption);
+  line-height: 1.15;
+  letter-spacing: 1px;
+  color: var(--band-ink-2);
+}
+.list-scope .nav__search{
+  display: flex;
+  align-items: center;
+  height: 54px;
+  padding: 0 12px 10px;
+}
+.list-scope .search{
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  height: 38px;
+  padding: 0 4px 0 8px;
+  background-color: var(--band-fill);
+  border: 0.5px solid var(--band-line);
+  border-radius: var(--r-md);
+  transition: border-color var(--d-short) var(--e-standard);
+}
+.list-scope .search--focus{
+  border-color: var(--band-ink);
+}
+.list-scope .search__lens{
+  position: relative;
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  margin-right: 7px;
+  border: 1.5px solid var(--band-ink-2);
+  border-radius: 50%;
+}
+.list-scope .search__lens::after{
+  content: "";
+  position: absolute;
+  right: -4px;
+  bottom: -2.5px;
+  width: 6px;
+  height: 1.5px;
+  background-color: var(--band-ink-2);
+  transform: rotate(45deg);
+}
+.list-scope .search__input{
+  background-color: transparent;
+  flex: 1;
+  min-width: 0;
+  height: 38px;
+  font-size: var(--fs-body);
+  color: var(--band-ink);
+}
+.list-scope .search__ph{
+  color: var(--band-ink-2);
+}
+.list-scope /* 视觉 18px，热区 32px —— 视觉尺寸不变，可点面积接近翻倍 */
+.search__clear-hit{
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+.list-scope .search__clear{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: var(--fs-caption);
+  line-height: 1;
+  color: var(--band-bg);
+  background-color: var(--band-ink-2);
+}
+.list-scope .search__btn{
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  margin-left: 6px;
+  border-radius: var(--r-md);
+  background-color: transparent;
+  border: 0.5px solid var(--band-line);
+  color: var(--band-ink);
+  font-family: var(--font-display);
+  font-size: var(--fs-body);
+  letter-spacing: 0;
+  transition: transform var(--d-micro) var(--e-spring),
+    background-color var(--d-short) var(--e-standard);
+}
+.list-scope .search__btn--press{
+  transform: scale(0.94);
+  background-color: var(--band-fill);
+}
+.list-scope /* ============================================================================
+   今日刊头
+   ============================================================================ */
+.masthead{
+  display: flex;
+  align-items: flex-start;
+  padding: 13px 16px 0;
+}
+.list-scope .masthead__side{
+  flex-shrink: 0;
+  /* 与标题首字对齐：竖排题签是页边注，不是 kicker 的前缀 */
+  padding-top: 23px;
+  padding-right: 9px;
+}
+.list-scope .masthead__main{
+  flex: 1;
+  min-width: 0;
+}
+.list-scope .masthead__title{
+  margin-top: 1px;
+  font-family: var(--font-display);
+  font-size: var(--fs-display);
+  line-height: var(--lh-tight);
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--ink);
+}
+.list-scope .masthead__meta{
+  display: flex;
+  align-items: baseline;
+  margin-top: 5px;
+  font-size: var(--fs-caption);
+  letter-spacing: 0.5px;
+  color: var(--ink-3);
+}
+.list-scope .masthead__meta .num{
+  margin-right: 3px;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.list-scope .masthead__actions{
+  flex-shrink: 0;
+  margin-left: 6px;
+  margin-top: 1px;
+}
+.list-scope /* 写菜牌：从悬浮 FAB 收进刊头，不再遮挡列表 */
+.write{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background-color: transparent;
+  border: 0.5px solid var(--accent);
+  border-radius: var(--r-md);
+  color: var(--accent);
+  transition: transform var(--d-micro) var(--e-spring),
+    background-color var(--d-short) var(--e-standard);
+}
+.list-scope .write--press{
+  transform: scale(0.92);
+  background-color: var(--accent-soft);
+}
+.list-scope .write__char{
+  font-family: var(--font-display);
+  font-size: var(--fs-body);
+  line-height: 1.1;
+}
+.list-scope .write__label{
+  margin-top: 1px;
+  font-size: var(--fs-badge);
+  line-height: 1.2;
+  letter-spacing: 1px;
+  opacity: 0.84;
+}
+.list-scope /* ============================================================================
+   今日灶火：叠层海报
+   ============================================================================ */
+.feature{
+  padding-top: 10px;
+}
+.list-scope .feature__swiper{
+  height: 150px;
+}
+.list-scope .feature__item{
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  border: 0.5px solid var(--line-strong);
+  border-radius: var(--r-md);
+  opacity: 0.72;
+  transform: scale(0.96);
+  transition: transform var(--d-long) var(--e-decelerate), opacity var(--d-long) var(--e-standard);
+}
+.list-scope .feature__item--on{
+  opacity: 1;
+  transform: scale(1);
+}
+.list-scope .feature__item--press{
+  opacity: 0.86;
+}
+.list-scope .feature__img{
+  width: 100%;
+  height: 100%;
+}
+.list-scope .feature__veil{
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background-image: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.04) 0%,
+    rgba(0, 0, 0, 0.12) 42%,
+    rgba(0, 0, 0, 0.74) 100%
+  );
+}
+.list-scope .feature__mark{
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 1em;
+  font-family: var(--font-display);
+  font-size: var(--fs-caption);
+  line-height: 1.16;
+  letter-spacing: 1.5px;
+  word-break: break-all;
+  color: rgba(255, 248, 236, 0.82);
+}
+.list-scope .feature__caption{
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 9px;
+  font-family: var(--font-display);
+  font-size: var(--fs-title);
+  letter-spacing: 1px;
+  color: var(--seal-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.list-scope .feature__dots{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 6px;
+}
+.list-scope .feature__dot{
+  width: 10px;
+  height: 1.5px;
+  margin: 0 2px;
+  background-color: var(--line-strong);
+  transform: scaleX(1);
+  transition: transform var(--d-medium) var(--e-decelerate), background-color var(--d-short) var(--e-standard);
+}
+.list-scope .feature__dot--on{
+  background-color: var(--seal-bg);
+  transform: scaleX(1.8);
+}
+.list-scope /* ============================================================================
+   品类签条
+   ----------------------------------------------------------------------------
+   形变不再过渡 padding（会触发布局重排）。
+   选中态由 ::before 铺底 + transform: scaleX 完成，只走合成层。
+   ============================================================================ */
+.cats{
+  height: 52px;
+  padding-top: 7px;
+}
+.list-scope .cats__row{
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+}
+.list-scope .cat{
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 13px;
+  margin-right: 6px;
+  border-radius: var(--r-md);
+  border: 0.5px solid var(--line);
+  background-color: var(--surface);
+  transition: border-color var(--d-short) var(--e-standard);
+}
+.list-scope .cat::before{
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: var(--r-md);
+  background-color: var(--seal-bg);
+  transform: scaleX(0.82);
+  opacity: 0;
+  transition: transform var(--d-short) var(--e-decelerate), opacity var(--d-short) var(--e-standard);
+}
+.list-scope .cat__text{
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-display);
+  font-size: var(--fs-meta);
+  line-height: 1.4;
+  letter-spacing: 0.5px;
+  color: var(--ink-2);
+  transition: color var(--d-short) var(--e-standard);
+}
+.list-scope .cat--on{
+  border-color: var(--seal-bg);
+}
+.list-scope .cat--on::before{
+  transform: scaleX(1);
+  opacity: 1;
+}
+.list-scope .cat--on .cat__text{
+  color: var(--seal-ink);
+  font-weight: 600;
+}
+.list-scope .cat--press{
+  opacity: 0.82;
+}
+.list-scope /* ============================================================================
+   菜牌
+   ============================================================================ */
+.list-head{
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 10px 16px 6px;
+}
+.list-scope .list-head__title{
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--ink);
+}
+.list-scope .list-head__count{
+  font-size: var(--fs-caption);
+  color: var(--ink-3);
+}
+.list-scope .menu-grid{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+.list-scope /* 入场动画的载体：只负责位移与透明度 */
+.dish-cell{
+  width: 48.6%;
+  margin-bottom: 10px;
+}
+.list-scope /* 交互的载体：只负责按压缩放 */
+.dish-card{
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--surface);
+  border: 0.5px solid var(--line);
+  border-radius: var(--r-lg);
+  transition: transform var(--d-micro) var(--e-standard), opacity var(--d-micro) var(--e-standard);
+}
+.list-scope .dish-card--press{
+  transform: scale(0.98);
+  opacity: 0.92;
+}
+.list-scope .dish-card__media{
+  position: relative;
+  height: 150px;
+  background-color: var(--surface-2);
+}
+.list-scope .dish-card__img{
+  width: 100%;
+  height: 100%;
+}
+.list-scope .dish-card__ph{
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-image: radial-gradient(circle at 46% 38%, var(--halo), transparent 64%);
+}
+.list-scope .dish-card__ph .serif{
+  font-size: var(--fs-display);
+  color: var(--ink-3);
+}
+.list-scope .dish-card__idx{
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 1.5px 5px;
+  font-size: var(--fs-badge);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--ink);
+  background-color: var(--bg);
+  border: 0.5px solid var(--line);
+  border-radius: var(--r-xs);
+}
+.list-scope .dish-card__body{
+  padding: 8px;
+}
+.list-scope /* 两行高度固定：单行菜名不会让整行卡片错位 */
+.dish-card__name{
+  display: block;
+  min-height: 39px;
+  font-family: var(--font-display);
+  font-size: var(--fs-title);
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--ink);
+}
+.list-scope .dish-card__desc{
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-caption);
+  color: var(--ink-3);
+}
+.list-scope .dish-card__foot{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 5px;
+}
+.list-scope .dish-card__tags{
+  flex: 1;
+  min-width: 0;
+  padding-right: 4px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.list-scope .dish-card__tag{
+  margin-right: 5px;
+  font-size: var(--fs-caption);
+  color: var(--ink-3);
+}
+.list-scope /* 44px = 44px，达到触控下限 */
+.want{
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 0.5px solid var(--seal-bg);
+  border-radius: var(--r-md);
+  color: var(--seal-bg);
+  background-color: transparent;
+  font-family: var(--font-display);
+  font-size: var(--fs-caption);
+  letter-spacing: 0.5px;
+  transition: transform var(--d-micro) var(--e-spring),
+    background-color var(--d-short) var(--e-standard), color var(--d-short) var(--e-standard);
+}
+.list-scope .want--press{
+  transform: scale(0.92);
+  color: var(--seal-ink);
+  background-color: var(--seal-bg);
+}
+.list-scope .want--bump{
+  animation: want-bump var(--d-long) var(--e-spring);
+}
+@keyframes want-bump{
+  0% { transform: scale(1); }
+  34% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.list-scope /* 骨架 */
+.dish-card--sk{
+  border-color: transparent;
+  background-color: transparent;
+}
+.list-scope .sk__img{
+  width: 100%;
+  height: 150px;
+}
+.list-scope .sk__body{
+  padding: 8px;
+}
+.list-scope .sk__line{
+  height: 10px;
+  margin-bottom: 6px;
+}
+.list-scope /* ============================================================================
+   列表尾 / 空态
+   ============================================================================ */
+.feed-foot{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 0 5px;
+  font-size: var(--fs-caption);
+  letter-spacing: 0.5px;
+  color: var(--ink-3);
+}
+.list-scope .feed-foot__spin{
+  width: 14px;
+  height: 14px;
+  margin-right: 5px;
+  border: 1px solid var(--line-strong);
+  border-top-color: var(--seal-bg);
+  border-radius: 50%;
+}
+.list-scope /* ============================================================================
+   想吃 → Dock
+   ============================================================================ */
+.fly{
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background-color: var(--seal-bg);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  pointer-events: none;
+  z-index: 200;
+  transition: transform var(--d-long) var(--e-standard), opacity var(--d-long) var(--e-standard);
+}
+.list-scope /* ============================================================================
+   减弱动效
+   ============================================================================ */
+.reduce-motion .feature__item, .list-scope .reduce-motion .want, .list-scope .reduce-motion .theme-seal, .list-scope .reduce-motion .search__btn, .list-scope .reduce-motion .cat, .list-scope .reduce-motion .cat::before, .list-scope .reduce-motion .dish-card, .list-scope .reduce-motion .write{
+  transition: none !important;
+}
+.list-scope .reduce-motion .want--bump{
+  animation: none !important;
+}
+
+
+#s-detail /* pages/detail/detail.wxss */
+/* 菜之一页：整幅头图 + 墨色菜牌 + 竖排题签 + 留言笺 */
+
+.page{
+  min-height: 100vh;
+  padding-bottom: 30px;
+  background-color: var(--bg);
+}
+#s-detail /* ============================================================================
+   头图
+   ============================================================================ */
+.hero{
+  position: relative;
+  height: 310px;
+  overflow: hidden;
+  background-color: var(--surface-2);
+}
+#s-detail .hero__swiper{
+  width: 100%;
+  height: 100%;
+}
+#s-detail .hero__img{
+  width: 100%;
+  height: 100%;
+}
+#s-detail .hero__veil{
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 110px;
+  background-image: linear-gradient(180deg, transparent 0%, rgba(15, 10, 6, 0.55) 100%);
+  pointer-events: none;
+}
+#s-detail .hero__dots{
+  position: absolute;
+  bottom: 60px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+}
+#s-detail .hero__dot{
+  width: 10px;
+  height: 1.5px;
+  margin-left: 4px;
+  background-color: rgba(255, 248, 236, 0.36);
+  transform: scaleX(1);
+  transition: transform var(--d-medium) var(--e-decelerate), background-color var(--d-short) var(--e-standard);
+}
+#s-detail .hero__dot--on{
+  background-color: var(--seal-ink);
+  transform: scaleX(1.8);
+}
+#s-detail .hero--empty{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 180px;
+}
+#s-detail .hero--empty .empty__halo{
+  width: 60px;
+  height: 60px;
+  margin-bottom: 8px;
+}
+#s-detail .hero--empty .caption{
+  color: var(--ink-3);
+}
+#s-detail /* ============================================================================
+   墨色菜牌
+   ============================================================================ */
+.plate{
+  position: relative;
+  z-index: 2;
+  margin: -52px 14px 0;
+  padding: 12px 13px 11px;
+  background-color: var(--band-bg);
+  color: var(--band-ink);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
+}
+#s-detail .plate__top{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+#s-detail .plate__text{
+  flex: 1;
+  min-width: 0;
+  margin-right: 8px;
+}
+#s-detail .plate__kicker{
+  font-size: var(--fs-caption);
+  line-height: 1.4;
+  letter-spacing: 1.5px;
+  color: var(--band-ink-2);
+}
+#s-detail .plate__name{
+  margin-top: 4px;
+  font-family: var(--font-display);
+  font-size: var(--fs-h1);
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: var(--band-ink);
+}
+#s-detail .plate__chef{
+  margin-top: 4px;
+  font-size: var(--fs-caption);
+  line-height: 1.4;
+  letter-spacing: 0.5px;
+  color: var(--band-ink-2);
+}
+#s-detail .plate__tags{
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+#s-detail .chip--plate{
+  margin: 0 6px 0 0;
+  color: rgba(246, 238, 220, 0.72);
+  border-color: var(--band-line);
+}
+#s-detail /* ============================================================================
+   菜页正文
+   ============================================================================ */
+.sheet{
+  margin: 0 14px;
+  padding: 4px 15px 18px;
+  background-color: var(--surface);
+  border: 0.5px solid var(--line);
+  border-top: none;
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+}
+#s-detail .section{
+  display: block;
+  padding: 16px 0;
+  border-bottom: 0.5px solid var(--line);
+}
+#s-detail .section:last-child{
+  border-bottom: none;
+}
+#s-detail /* 横排分区标题：11px 竖排题签在 375pt 屏上只有 12px 且逐字断行，已不可读 */
+.section__head{
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+#s-detail .section__label{
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-caption);
+  letter-spacing: 2px;
+  color: var(--ink-3);
+}
+#s-detail .section__line{
+  flex: 1;
+  height: 0.5px;
+  margin-left: 8px;
+  background-color: var(--line);
+}
+#s-detail .section__text{
+  font-size: var(--fs-body);
+  line-height: 1.85;
+  color: var(--ink-2);
+}
+#s-detail .ingredients{
+  display: flex;
+  flex-wrap: wrap;
+}
+#s-detail .ingredient{
+  width: 50%;
+  display: flex;
+  align-items: center;
+  margin-bottom: 7px;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  color: var(--ink);
+}
+#s-detail .ingredient__dot{
+  width: 4px;
+  height: 4px;
+  margin-right: 6px;
+  background-color: var(--seal-bg);
+  transform: rotate(45deg);
+}
+#s-detail .step{
+  display: flex;
+  padding-bottom: 11px;
+}
+#s-detail .step:last-child{
+  padding-bottom: 0;
+}
+#s-detail .step__no{
+  flex-shrink: 0;
+  width: 27px;
+  font-size: var(--fs-meta);
+  line-height: 1.85;
+  font-weight: 600;
+  color: var(--accent);
+}
+#s-detail .step__text{
+  flex: 1;
+  font-size: var(--fs-body);
+  line-height: 1.85;
+  color: var(--ink-2);
+}
+#s-detail /* ============================================================================
+   留言
+   ============================================================================ */
+.comment-head__count{
+  flex-shrink: 0;
+  margin-left: 8px;
+  font-size: var(--fs-caption);
+  color: var(--ink-3);
+}
+#s-detail .composer{
+  display: flex;
+  align-items: center;
+  padding: 5px 5px 5px 7px;
+  background-color: var(--surface-2);
+  border: 0.5px solid var(--line);
+  border-radius: var(--r-md);
+}
+#s-detail .composer__seal{
+  margin-right: 6px;
+}
+#s-detail .composer__input{
+  background-color: transparent;
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  font-size: var(--fs-meta);
+  color: var(--ink);
+}
+#s-detail .composer__ph{
+  color: var(--ink-3);
+}
+#s-detail .composer__send{
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 30px;
+  font-family: var(--font-display);
+  font-size: var(--fs-meta);
+  letter-spacing: 0.5px;
+  color: var(--ink-3);
+  border: 0.5px solid var(--line);
+  border-radius: var(--r-md);
+  transition: transform var(--d-short) var(--e-standard),
+    background-color var(--d-short) var(--e-standard), color var(--d-short) var(--e-standard), border-color var(--d-short) var(--e-standard);
+}
+#s-detail .composer__send--on{
+  color: var(--seal-ink);
+  background-color: var(--seal-bg);
+  border-color: var(--seal-bg);
+}
+#s-detail .composer__send--press{
+  transform: scale(0.94);
+}
+#s-detail .cmt{
+  display: flex;
+  padding: 10px 0;
+  border-bottom: 0.5px dashed var(--line);
+  animation: enter var(--d-long) var(--e-decelerate) backwards;
+  transition: transform var(--d-medium) var(--e-standard), opacity var(--d-medium) var(--e-standard);
+}
+#s-detail .cmt:last-of-type{
+  border-bottom: none;
+}
+#s-detail .cmt--out{
+  transform: translate3d(40px, -15px, 0) rotate(10deg) scale(0.7);
+  opacity: 0;
+}
+#s-detail .cmt__seal{
+  margin-right: 7px;
+}
+#s-detail .cmt__body{
+  flex: 1;
+  min-width: 0;
+  padding-top: 1px;
+}
+#s-detail .cmt__text{
+  font-size: var(--fs-meta);
+  line-height: 1.75;
+  color: var(--ink-2);
+  word-break: break-word;
+}
+#s-detail .cmt__time{
+  margin-top: 2px;
+  font-size: var(--fs-caption);
+  color: var(--ink-3);
+}
+#s-detail .cmt__empty{
+  padding: 12px 0 4px;
+  font-size: var(--fs-meta);
+  color: var(--ink-3);
+}
+#s-detail /* ============================================================================
+   底部操作
+   ============================================================================ */
+.bar{
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  padding: 6px 12px calc(6px + env(safe-area-inset-bottom));
+  background-color: var(--surface);
+  border-top: 0.5px dashed var(--line-strong);
+  animation: bar-up var(--d-long) var(--e-decelerate) backwards;
+}
+#s-detail .bar__quiet{
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 17px;
+  margin-right: 8px;
+  font-size: var(--fs-body);
+  letter-spacing: 1px;
+  color: var(--ink);
+  border: 0.5px solid var(--line-strong);
+  border-radius: var(--r-md);
+  transition: transform var(--d-short) var(--e-standard);
+}
+#s-detail .bar__primary{
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  font-family: var(--font-display);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: var(--seal-ink);
+  background-color: var(--seal-bg);
+  border-radius: var(--r-md);
+  transition: transform var(--d-short) var(--e-standard);
+}
+#s-detail .bar__quiet--press, #s-detail .bar__primary--press{
+  transform: scale(0.97);
+  opacity: 0.92;
+}
+#s-detail /* ============================================================================
+   加载骨架
+   ============================================================================ */
+.hero--sk{
+  height: 310px;
+}
+#s-detail .sheet--sk{
+  padding: 20px 15px;
+}
+#s-detail .sk-line{
+  margin-bottom: 7px;
+  border-radius: var(--r-md);
+}
+#s-detail /* ============================================================================
+   减弱动效
+   ============================================================================ */
+.reduce-motion .cmt, #s-detail .reduce-motion .composer__send, #s-detail .reduce-motion .bar__quiet, #s-detail .reduce-motion .bar__primary{
+  transition: none !important;
+}
+#s-detail .reduce-motion .hero__dot{
+  transition: none !important;
+}
+
+
+#s-my /* pages/my/my.wxss */
+/* 食客档案：墨色档案卡 + 日/月主题 + 账册入口 */
+
+.page{
+  min-height: 100vh;
+  padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  background-color: var(--bg);
+}
+#s-my /* tab 页改为自定义导航后，页眉自己承担状态栏以下的第一个视觉重量 */
+.page-head{
+  margin: 8px 12px 0;
+}
+#s-my .page-head__text{
+  display: flex;
+  flex-direction: column;
+}
+#s-my .bookband__meta{
+  margin-top: 1px;
+}
+#s-my /* ============================================================================
+   档案卡
+   ============================================================================ */
+.archive{
+  margin: 13px 12px 0;
+  padding: 12px;
+  background-color: var(--band-bg);
+  color: var(--band-ink);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
+}
+#s-my .archive__top{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+#s-my .archive__label{
+  font-size: var(--fs-caption);
+  letter-spacing: 1px;
+  color: var(--band-ink-2);
+}
+#s-my .archive__body{
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+}
+#s-my .avatar{
+  position: relative;
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: var(--band-fill);
+  border: 0.5px solid var(--band-line);
+  transition: transform var(--d-short) var(--e-spring);
+}
+#s-my .avatar--press{
+  transform: scale(0.93);
+}
+#s-my .avatar__img{
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: var(--surface-2);
+}
+#s-my .avatar__ph{
+  font-family: var(--font-display);
+  font-size: var(--fs-h1);
+  color: var(--band-ink);
+}
+#s-my .avatar__badge{
+  position: absolute;
+  right: -4px;
+  bottom: -1px;
+}
+#s-my .avatar__mask{
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-caption);
+  color: var(--seal-ink);
+  background-color: rgba(0, 0, 0, 0.48);
+  border-radius: 50%;
+}
+#s-my .archive__info{
+  flex: 1;
+  min-width: 0;
+  margin-left: 12px;
+}
+#s-my .archive__name{
+  font-family: var(--font-display);
+  font-size: var(--fs-h1);
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--band-ink);
+}
+#s-my .archive__meta{
+  display: flex;
+  align-items: center;
+  margin-top: 5px;
+  font-size: var(--fs-caption);
+  letter-spacing: 0.5px;
+  color: var(--band-ink-2);
+}
+#s-my .archive__role{
+  color: var(--band-ink);
+  opacity: 0.9;
+}
+#s-my .archive__dot{
+  margin: 0 4px;
+  opacity: 0.5;
+}
+#s-my .archive__chev{
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  margin-left: 6px;
+  border-top: 1px solid var(--band-ink-2);
+  border-right: 1px solid var(--band-ink-2);
+  transform: rotate(45deg);
+}
+#s-my /* ============================================================================
+   统计
+   ============================================================================ */
+.stats{
+  display: flex;
+  align-items: center;
+  margin: 13px 12px 0;
+  padding: 10px 0;
+  border-bottom: 0.5px solid var(--line);
+}
+#s-my .stat{
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform var(--d-short) var(--e-standard);
+}
+#s-my .stat--press{
+  transform: scale(0.95);
+}
+#s-my .stat__num{
+  font-size: var(--fs-h1);
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--ink);
+}
+#s-my .stat__label{
+  display: flex;
+  align-items: center;
+  margin-top: 7px;
+  font-size: var(--fs-caption);
+  letter-spacing: 1px;
+  color: var(--ink-3);
+}
+#s-my .stat__label .seal{
+  margin-right: 4px;
+}
+#s-my .stats__rule{
+  width: 0.5px;
+  height: 32px;
+  background-color: var(--line);
+}
+#s-my /* ============================================================================
+   设置
+   ============================================================================ */
+.panel{
+  margin: 12px 12px 0;
+  background-color: var(--surface);
+  border: 0.5px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+#s-my .panel__row{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 12px;
+  border-bottom: 0.5px solid var(--line);
+  transition: opacity var(--d-micro) var(--e-standard);
+}
+#s-my .panel__row--last{
+  border-bottom: none;
+}
+#s-my .panel__row--press{
+  opacity: 0.72;
+}
+#s-my .panel__text{
+  flex: 1;
+  min-width: 0;
+  margin-right: 10px;
+}
+#s-my .panel__label{
+  font-size: var(--fs-title);
+  letter-spacing: 0.5px;
+  color: var(--ink);
+}
+#s-my .panel__desc{
+  margin-top: 2px;
+  font-size: var(--fs-caption);
+  color: var(--ink-3);
+}
+#s-my /* 开关：轨道 48px，滑块 20px，行程 22px（84 - 40），只动 transform */
+.switch{
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  width: 48px;
+  height: 26px;
+  padding: 3px;
+  background-color: var(--surface-2);
+  border: 0.5px solid var(--line);
+  border-radius: var(--r-pill);
+  transition: background-color var(--d-short) var(--e-standard),
+    border-color var(--d-short) var(--e-standard);
+}
+#s-my .switch__knob{
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--ink-3);
+  transform: translate3d(0, 0, 0);
+  transition: transform var(--d-short) var(--e-standard),
+    background-color var(--d-short) var(--e-standard);
+}
+#s-my .switch--on{
+  background-color: var(--seal-bg);
+  border-color: var(--seal-bg);
+}
+#s-my .switch--on .switch__knob{
+  background-color: var(--seal-ink);
+  transform: translate3d(22px, 0, 0);
+}
+#s-my /* ============================================================================
+   账册入口
+   ============================================================================ */
+.menu{
+  margin: 12px 12px 0;
+}
+#s-my .menu__row{
+  transition: transform var(--d-short) var(--e-standard), opacity var(--d-micro) var(--e-standard);
+}
+#s-my .menu__row--press{
+  transform: scale(0.99);
+  opacity: 0.72;
+}
+#s-my .menu__diamond{
+  flex-shrink: 0;
+  width: 4px;
+  height: 4px;
+  margin-right: 8px;
+  background-color: var(--seal-bg);
+  transform: rotate(45deg);
+}
+#s-my .menu__text{
+  flex: 1;
+  min-width: 0;
+  margin-right: 8px;
+}
+#s-my .menu__title-line{
+  display: flex;
+  align-items: center;
+}
+#s-my .menu__title{
+  font-size: var(--fs-title);
+  letter-spacing: 0.5px;
+  color: var(--ink);
+}
+#s-my .menu__badge{
+  margin-left: 6px;
+  min-width: 15px;
+  height: 15px;
+  line-height: 15px;
+  padding: 0 4px;
+  text-align: center;
+  font-size: var(--fs-badge);
+  color: var(--seal-ink);
+  background-color: var(--seal-bg);
+  border-radius: var(--r-md);
+}
+#s-my .menu__desc{
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-caption);
+  color: var(--ink-3);
+}
+#s-my .menu__chev{
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-top: 1px solid var(--ink-3);
+  border-right: 1px solid var(--ink-3);
+  transform: rotate(45deg);
+}
+#s-my /* ============================================================================
+   落款
+   ============================================================================ */
+.about{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 24px;
+  padding-bottom: 10px;
+  font-size: var(--fs-caption);
+  line-height: 2;
+  letter-spacing: 0.5px;
+  color: var(--ink-3);
+}
+#s-my .about .seal{
+  margin-bottom: 4px;
+}
+#s-my .about__line{
+  display: block;
+}
+#s-my .reduce-motion .stat, #s-my .reduce-motion .panel__row, #s-my .reduce-motion .menu__row, #s-my .reduce-motion .switch, #s-my .reduce-motion .switch__knob, #s-my .reduce-motion .avatar{
+  transition: none !important;
+}
+
+
+
+body {
+  margin: 0;
+  padding: 48px 44px 64px;
+  background: #0C0C0E;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  display: flex;
+  gap: 36px;
+  align-items: flex-start;
+}
+.stage { display: flex; flex-direction: column; gap: 14px; }
+.cap { color: #8B8378; font-size: 13px; letter-spacing: 1px; text-align: center; }
+.cap b { color: #E7DCC7; font-weight: 600; }
+.device {
+  width: 375px; height: 812px; border-radius: 44px; overflow: hidden;
+  position: relative; background: #000;
+  box-shadow: 0 30px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.07);
+}
+.screen { width: 375px; height: 812px; position: relative; overflow: hidden; }
+* { box-sizing: border-box; }
+.screen .page { min-height: 812px !important; }
+.screen input { background: transparent; border: 0; outline: none; }
+.screen input::placeholder { color: var(--band-ink-3); }
+.screen .nav, .screen .dock, .screen .navbar, .screen .bar, .screen .tab-scrim,
+.screen .fly { position: absolute; }
+.screen .dock { bottom: 8px; }
+.screen .tab-scrim { height: 98px; }
+
+</style>
+</head>
+<body>
+  <div class="stage"><div class="device">
+<div class="screen theme-paper list-scope" id="s-list">
+  <div class="page">
+    <div class="nav" style="padding-top:44px">
+      <div class="nav__bar" style="height:44px">
+        <div class="theme-seal"><span class="theme-seal__char">日</span></div>
+        <div class="nav__brand">
+          <span class="nav__brand-main">坤坤食帖</span>
+          <span class="nav__brand-sub">今日 · 第 296 帖</span>
+        </div>
+      </div>
+      <div class="nav__search">
+        <div class="search">
+          <div class="search__lens"></div>
+          <input class="search__input" placeholder="寻味：菜名 / 食材 / 口味" />
+        </div>
+        <div class="search__btn">寻</div>
+      </div>
+    </div>
+    <div class="nav__placeholder" style="height:142px"></div>
+
+    <div class="masthead">
+      <div class="masthead__side"><div class="vlabel">食帖</div></div>
+      <div class="masthead__main">
+        <div class="kicker">灶火正旺 · 今日</div>
+        <div class="masthead__title">今天吃什么</div>
+        <div class="masthead__meta"><span class="num">12</span><span>道菜 · 现点现炒</span></div>
+      </div>
+      <div class="masthead__actions">
+        <div class="write"><span class="write__char">写</span><span class="write__label">菜牌</span></div>
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="feature__swiper" style="display:flex;align-items:center;padding:0 16px">
+        <div class="feature__item feature__item--on" style="width:100%">
+          <img class="feature__img" src="v4/img/braise.jpg" />
+          <div class="feature__veil"></div>
+          <div class="feature__mark">今日灶火</div>
+          <div class="feature__caption">红烧肉</div>
+        </div>
+      </div>
+      <div class="feature__dots">
+        <div class="feature__dot feature__dot--on"></div>
+        <div class="feature__dot"></div>
+        <div class="feature__dot"></div>
+      </div>
+    </div>
+
+    <div class="cats">
+      <div class="cats__row">
+        <div class="cat cat--on"><span class="cat__text">全部</span></div>
+        <div class="cat"><span class="cat__text">硬菜</span></div>
+        <div class="cat"><span class="cat__text">时蔬</span></div>
+        <div class="cat"><span class="cat__text">汤水</span></div>
+        <div class="cat"><span class="cat__text">主食</span></div>
+      </div>
+    </div>
+
+    <div class="list-head">
+      <span class="list-head__title">全部菜品</span>
+      <span class="list-head__count num">12 道</span>
+    </div>
+
+    <div class="menu-grid">
+      
+<div class="dish-cell">
+  <div class="dish-card">
+    <div class="dish-card__media">
+      <img class="dish-card__img" src="v4/img/braise.jpg" />
+      <div class="dish-card__idx num">01</div>
+    </div>
+    <div class="dish-card__body">
+      <span class="dish-card__name clamp2">红烧肉</span>
+      <span class="dish-card__desc text-ellipsis">五花三层，慢火收汁</span>
+      <div class="dish-card__foot">
+        <div class="dish-card__tags"><span class="dish-card__tag">硬菜</span><span class="dish-card__tag">家常</span></div>
+        <div class="want">想吃</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="dish-cell">
+  <div class="dish-card">
+    <div class="dish-card__media">
+      <img class="dish-card__img" src="v4/img/green.jpg" />
+      <div class="dish-card__idx num">02</div>
+    </div>
+    <div class="dish-card__body">
+      <span class="dish-card__name clamp2">清炒时蔬</span>
+      <span class="dish-card__desc text-ellipsis">当季青菜，蒜香起锅</span>
+      <div class="dish-card__foot">
+        <div class="dish-card__tags"><span class="dish-card__tag">清淡</span></div>
+        <div class="want">想吃</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="dish-cell">
+  <div class="dish-card">
+    <div class="dish-card__media">
+      <img class="dish-card__img" src="v4/img/soup.jpg" />
+      <div class="dish-card__idx num">03</div>
+    </div>
+    <div class="dish-card__body">
+      <span class="dish-card__name clamp2">老火例汤</span>
+      <span class="dish-card__desc text-ellipsis">筒骨玉米，煲足三小时</span>
+      <div class="dish-card__foot">
+        <div class="dish-card__tags"><span class="dish-card__tag">汤水</span></div>
+        <div class="want">想吃</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="dish-cell">
+  <div class="dish-card">
+    <div class="dish-card__media">
+      <img class="dish-card__img" src="v4/img/noodle.jpg" />
+      <div class="dish-card__idx num">04</div>
+    </div>
+    <div class="dish-card__body">
+      <span class="dish-card__name clamp2">葱油拌面</span>
+      <span class="dish-card__desc text-ellipsis">手擀面，葱油现熬</span>
+      <div class="dish-card__foot">
+        <div class="dish-card__tags"><span class="dish-card__tag">主食</span></div>
+        <div class="want">想吃</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    </div>
+    <div class="feed-foot"><span>到底了</span></div>
+    <div class="tab-scrim"></div>
+  </div>
+
+  <div class="dock theme-paper">
+    <div class="dock__tabs">
+      <div class="dock__mark"></div>
+      <div class="dock__tab dock__tab--on"><span class="dock__tab-text">首页</span></div>
+      <div class="dock__tab"><span class="dock__tab-text">留言</span></div>
+      <div class="dock__tab"><span class="dock__tab-text">档案</span></div>
+    </div>
+    <div class="dock__cart dock__cart--on">
+      <span class="dock__cart-count num">3</span>
+      <span class="dock__cart-label">去落单</span>
+    </div>
+  </div>
+</div>
+</div><div class="cap"><b>首页 · 宣纸</b> · 刊头压成一行 / 单层 Dock</div></div>
+  <div class="stage"><div class="device">
+<div class="screen theme-ink list-scope" id="s-list-ink">
+  <div class="page">
+    <div class="nav" style="padding-top:44px">
+      <div class="nav__bar" style="height:44px">
+        <div class="theme-seal"><span class="theme-seal__char">月</span></div>
+        <div class="nav__brand">
+          <span class="nav__brand-main">坤坤食帖</span>
+          <span class="nav__brand-sub">今日 · 第 296 帖</span>
+        </div>
+      </div>
+      <div class="nav__search">
+        <div class="search">
+          <div class="search__lens"></div>
+          <input class="search__input" placeholder="寻味：菜名 / 食材 / 口味" />
+        </div>
+        <div class="search__btn">寻</div>
+      </div>
+    </div>
+    <div class="nav__placeholder" style="height:142px"></div>
+
+    <div class="masthead">
+      <div class="masthead__side"><div class="vlabel">食帖</div></div>
+      <div class="masthead__main">
+        <div class="kicker">灶火正旺 · 今日</div>
+        <div class="masthead__title">今天吃什么</div>
+        <div class="masthead__meta"><span class="num">12</span><span>道菜 · 现点现炒</span></div>
+      </div>
+      <div class="masthead__actions">
+        <div class="write"><span class="write__char">写</span><span class="write__label">菜牌</span></div>
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="feature__swiper" style="display:flex;align-items:center;padding:0 16px">
+        <div class="feature__item feature__item--on" style="width:100%">
+          <img class="feature__img" src="v4/img/braise.jpg" />
+          <div class="feature__veil"></div>
+          <div class="feature__mark">今日灶火</div>
+          <div class="feature__caption">红烧肉</div>
+        </div>
+      </div>
+      <div class="feature__dots">
+        <div class="feature__dot feature__dot--on"></div>
+        <div class="feature__dot"></div>
+        <div class="feature__dot"></div>
+      </div>
+    </div>
+
+    <div class="cats">
+      <div class="cats__row">
+        <div class="cat cat--on"><span class="cat__text">全部</span></div>
+        <div class="cat"><span class="cat__text">硬菜</span></div>
+        <div class="cat"><span class="cat__text">时蔬</span></div>
+        <div class="cat"><span class="cat__text">汤水</span></div>
+        <div class="cat"><span class="cat__text">主食</span></div>
+      </div>
+    </div>
+
+    <div class="list-head">
+      <span class="list-head__title">全部菜品</span>
+      <span class="list-head__count num">12 道</span>
+    </div>
+
+    <div class="menu-grid">
+      
+<div class="dish-cell">
+  <div class="dish-card">
+    <div class="dish-card__media">
+      <img class="dish-card__img" src="v4/img/braise.jpg" />
+      <div class="dish-card__idx num">01</div>
+    </div>
+    <div class="dish-card__body">
+      <span class="dish-card__name clamp2">红烧肉</span>
+      <span class="dish-card__desc text-ellipsis">五花三层，慢火收汁</span>
+      <div class="dish-card__foot">
+        <div class="dish-card__tags"><span class="dish-card__tag">硬菜</span><span class="dish-card__tag">家常</span></div>
+        <div class="want">想吃</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="dish-cell">
+  <div class="dish-card">
+    <div class="dish-card__media">
+      <img class="dish-card__img" src="v4/img/green.jpg" />
+      <div class="dish-card__idx num">02</div>
+    </div>
+    <div class="dish-card__body">
+      <span class="dish-card__name clamp2">清炒时蔬</span>
+      <span class="dish-card__desc text-ellipsis">当季青菜，蒜香起锅</span>
+      <div class="dish-card__foot">
+        <div class="dish-card__tags"><span class="dish-card__tag">清淡</span></div>
+        <div class="want">想吃</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="dish-cell">
+  <div class="dish-card">
+    <div class="dish-card__media">
+      <img class="dish-card__img" src="v4/img/soup.jpg" />
+      <div class="dish-card__idx num">03</div>
+    </div>
+    <div class="dish-card__body">
+      <span class="dish-card__name clamp2">老火例汤</span>
+      <span class="dish-card__desc text-ellipsis">筒骨玉米，煲足三小时</span>
+      <div class="dish-card__foot">
+        <div class="dish-card__tags"><span class="dish-card__tag">汤水</span></div>
+        <div class="want">想吃</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="dish-cell">
+  <div class="dish-card">
+    <div class="dish-card__media">
+      <img class="dish-card__img" src="v4/img/noodle.jpg" />
+      <div class="dish-card__idx num">04</div>
+    </div>
+    <div class="dish-card__body">
+      <span class="dish-card__name clamp2">葱油拌面</span>
+      <span class="dish-card__desc text-ellipsis">手擀面，葱油现熬</span>
+      <div class="dish-card__foot">
+        <div class="dish-card__tags"><span class="dish-card__tag">主食</span></div>
+        <div class="want">想吃</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    </div>
+    <div class="feed-foot"><span>到底了</span></div>
+    <div class="tab-scrim"></div>
+  </div>
+
+  <div class="dock theme-ink">
+    <div class="dock__tabs">
+      <div class="dock__mark"></div>
+      <div class="dock__tab dock__tab--on"><span class="dock__tab-text">首页</span></div>
+      <div class="dock__tab"><span class="dock__tab-text">留言</span></div>
+      <div class="dock__tab"><span class="dock__tab-text">档案</span></div>
+    </div>
+    <div class="dock__cart dock__cart--on">
+      <span class="dock__cart-count num">3</span>
+      <span class="dock__cart-label">去落单</span>
+    </div>
+  </div>
+</div>
+</div><div class="cap"><b>首页 · 墨夜</b> · 同一套结构变量</div></div>
+  <div class="stage"><div class="device">
+<div class="screen theme-paper" id="s-detail">
+  <div class="page">
+    <div class="navbar theme-paper navbar--overlay" style="padding-top:44px">
+      <div class="navbar__bar" style="height:44px">
+        <div class="navbar__back"><div class="navbar__arrow"></div></div>
+      </div>
+    </div>
+
+    <div class="hero">
+      <img class="hero__img" src="v4/img/braise.jpg" />
+      <div class="hero__veil"></div>
+      <div class="hero__dots">
+        <div class="hero__dot hero__dot--on"></div>
+        <div class="hero__dot"></div>
+        <div class="hero__dot"></div>
+      </div>
+    </div>
+
+    <div class="plate">
+      <div class="plate__top">
+        <div class="plate__text">
+          <div class="plate__kicker">今日 · 一菜</div>
+          <div class="plate__name">红烧肉</div>
+          <div class="plate__chef">掌勺 · 坤叔</div>
+        </div>
+        <div class="seal seal--lg">坤</div>
+      </div>
+      <div class="plate__tags">
+        <span class="chip chip--plate">硬菜</span>
+        <span class="chip chip--plate">家常</span>
+      </div>
+    </div>
+
+    <div class="sheet">
+      <div class="section">
+        <div class="section__head"><span class="section__label">简介</span><div class="section__line"></div></div>
+        <div class="section__text">选五花三层，先煸后炖。冰糖炒色，黄酒代水，小火慢煨一小时，收汁到能挂住勺背。入口先甜后咸，肥而不腻。</div>
+      </div>
+
+      <div class="section">
+        <div class="section__head"><span class="section__label">食材</span><div class="section__line"></div></div>
+        <div class="ingredients">
+          <div class="ingredient"><div class="ingredient__dot"></div><span class="ingredient__text">五花肉 800g</span></div>
+          <div class="ingredient"><div class="ingredient__dot"></div><span class="ingredient__text">冰糖 40g</span></div>
+          <div class="ingredient"><div class="ingredient__dot"></div><span class="ingredient__text">黄酒 300ml</span></div>
+          <div class="ingredient"><div class="ingredient__dot"></div><span class="ingredient__text">生抽 2 勺</span></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section__head"><span class="section__label">做法</span><div class="section__line"></div></div>
+        <div class="step"><span class="step__no num">01</span><span class="step__text">肉切三厘米见方，冷水下锅焯净血沫，捞出擦干。</span></div>
+        <div class="step"><span class="step__no num">02</span><span class="step__text">热锅下冰糖炒至枣红，下肉翻匀，加黄酒与生抽，小火一小时。</span></div>
+      </div>
+
+      <div class="section section--comment">
+        <div class="section__head"><span class="section__label">留言</span><div class="section__line"></div><span class="comment-head__count num">2</span></div>
+        <div class="composer">
+          <div class="seal seal--sm composer__seal">坤</div>
+          <input class="composer__input" placeholder="写下这次的心得" />
+          <div class="composer__send">发送</div>
+        </div>
+        <div class="cmt">
+          <div class="seal seal--sm cmt__seal">坤</div>
+          <div class="cmt__body">
+            <div class="cmt__text">收汁这一步真的关键，挂勺背的浓度刚好。</div>
+            <div class="cmt__time">3 小时前</div>
+          </div>
+        </div>
+        <div class="cmt">
+          <div class="seal seal--sm cmt__seal">坤</div>
+          <div class="cmt__body">
+            <div class="cmt__text">照这个方子做了一次，家里人说比外面馆子强。</div>
+            <div class="cmt__time">昨天</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div><div class="cap"><b>菜之一页</b> · 沉浸头图 / 横排分区</div></div>
+  <div class="stage"><div class="device">
+<div class="screen theme-ink" id="s-my">
+  <div class="page" style="padding-top:44px">
+    <div class="bookband page-head">
+      <div class="page-head__text">
+        <div class="bookband__title">档案</div>
+        <div class="bookband__meta">厨师 · 记录每一道拿手菜</div>
+      </div>
+      <div class="seal">档</div>
+    </div>
+
+    <div class="archive">
+      <div class="archive__top"><span class="archive__label">身份卡</span></div>
+      <div class="archive__body">
+        <div class="avatar">
+          <div class="avatar__ph">坤</div>
+          <div class="seal seal--sm avatar__badge">勺</div>
+        </div>
+        <div class="archive__info">
+          <div class="archive__name text-ellipsis">阿坤</div>
+          <div class="archive__meta"><span class="archive__role">厨师</span><span class="archive__dot">·</span><span>点一下改昵称</span></div>
+        </div>
+        <div class="archive__chev"></div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <span class="stat__num num">12</span>
+        <div class="stat__label"><div class="seal seal--sm">菜</div><span>菜品</span></div>
+      </div>
+      <div class="stats__rule"></div>
+      <div class="stat">
+        <span class="stat__num num">8</span>
+        <div class="stat__label"><div class="seal seal--sm">签</div><span>标签</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel__row">
+        <div class="panel__text">
+          <div class="panel__label">墨夜模式</div>
+          <div class="panel__desc">日间宣纸 / 灯下墨夜</div>
+        </div>
+        <div class="switch switch--on"><div class="switch__knob"></div></div>
+      </div>
+      <div class="panel__row panel__row--last">
+        <div class="panel__text">
+          <div class="panel__label">减弱动效</div>
+          <div class="panel__desc">去掉位移与弹性，只保留淡入</div>
+        </div>
+        <div class="switch"><div class="switch__knob"></div></div>
+      </div>
+    </div>
+
+    <div class="ledger menu">
+      <div class="ledger__row menu__row">
+        <div class="menu__diamond"></div>
+        <div class="menu__text">
+          <div class="menu__title-line"><span class="menu__title">我的食单</span></div>
+          <span class="menu__desc">报餐单与制作状态</span>
+        </div>
+        <div class="menu__chev"></div>
+      </div>
+      <div class="ledger__row menu__row">
+        <div class="menu__diamond"></div>
+        <div class="menu__text">
+          <div class="menu__title-line"><span class="menu__title">灶房</span><span class="menu__badge num">3</span></div>
+          <span class="menu__desc">飞帖与在灶单</span>
+        </div>
+        <div class="menu__chev"></div>
+      </div>
+      <div class="ledger__row menu__row">
+        <div class="menu__diamond"></div>
+        <div class="menu__text">
+          <div class="menu__title-line"><span class="menu__title">海报墙</span></div>
+          <span class="menu__desc">首页顶部轮播图片</span>
+        </div>
+        <div class="menu__chev"></div>
+      </div>
+    </div>
+
+    <div class="about">
+      <div class="seal seal--sm">坤</div>
+      <span class="about__line">坤坤食帖 · 云开发版</span>
+    </div>
+
+    <div class="tab-scrim"></div>
+  </div>
+
+  <div class="dock theme-ink">
+    <div class="dock__tabs">
+      <div class="dock__mark" style="transform:translate3d(200%,0,0)"></div>
+      <div class="dock__tab"><span class="dock__tab-text">首页</span></div>
+      <div class="dock__tab"><span class="dock__tab-text">留言</span></div>
+      <div class="dock__tab dock__tab--on"><span class="dock__tab-text">档案</span></div>
+    </div>
+    <div class="dock__cart">
+      <span class="dock__cart-count num">0</span>
+      <span class="dock__cart-label">点菜单</span>
+    </div>
+  </div>
+</div>
+</div><div class="cap"><b>档案</b> · 语义化开关 / 墨夜主题</div></div>
+</body>
+</html>

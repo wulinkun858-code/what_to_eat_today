@@ -1,0 +1,1891 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="paper">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>坤坤食帖 · 视觉预览 v3</title>
+<style>
+  /* ============================================================
+     坤坤食帖 v3 · 视觉预览
+     375px 手机画布；1px ≈ 小程序 2rpx
+     日间 paper / 夜间 ink
+     ============================================================ */
+  :root {
+    --serif: "Songti SC", "STSong", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun", serif;
+    --sans: "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+    --num: "DIN Alternate", "Bahnschrift", "Arial Narrow", "PingFang SC", sans-serif;
+
+    --bg: #EFE6D3;
+    --bg-2: #E7DCC7;
+    --surface: #F8F1E1;
+    --surface-2: #EDE2CC;
+    --ink: #1B1712;
+    --ink-2: #5E5346;
+    --ink-3: #7C7060;
+    --line: rgba(28, 23, 18, 0.12);
+    --line-strong: rgba(28, 23, 18, 0.28);
+    --band-bg: #1B1712;
+    --band-ink: #F6EEDC;
+    --accent: #B4381F;
+    --accent-ink: #FFF8EC;
+    --accent-soft: rgba(180, 56, 31, 0.10);
+    --jade: #1E6B58;
+    --gold: #A67C2E;
+    --seal-bg: #B4381F;
+    --seal-ink: #FFF8EC;
+    --halo: rgba(27, 23, 18, 0.14);
+    --shadow-md: 0 16px 40px rgba(60, 44, 26, 0.10);
+  }
+
+  html[data-theme="ink"] {
+    --bg: #11100D;
+    --bg-2: #181611;
+    --surface: #1D1A14;
+    --surface-2: #26221A;
+    --ink: #F1E7D3;
+    --ink-2: #BFB29B;
+    --ink-3: #8F836E;
+    --line: rgba(241, 231, 211, 0.11);
+    --line-strong: rgba(241, 231, 211, 0.26);
+    --band-bg: #221E17;
+    --band-ink: #F1E7D3;
+    --accent: #D6543A;
+    --accent-ink: #171009;
+    --accent-soft: rgba(214, 84, 58, 0.16);
+    --jade: #6FBFA0;
+    --gold: #D4AF37;
+    --seal-bg: #B4381F;
+    --seal-ink: #FFF8EC;
+    --halo: rgba(241, 231, 211, 0.12);
+    --shadow-md: 0 18px 44px rgba(0, 0, 0, 0.55);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #171410;
+    color: #F1E7D3;
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- 工具栏 ---------- */
+  .toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 28px;
+    background: rgba(23, 20, 16, 0.94);
+    border-bottom: 1px solid rgba(241, 231, 211, 0.12);
+  }
+  .toolbar__brand {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .toolbar__title {
+    font-family: var(--serif);
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: #F6EEDC;
+  }
+  .toolbar__sub {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: rgba(241, 231, 211, 0.5);
+  }
+  .theme-switch {
+    display: flex;
+    gap: 6px;
+    padding: 4px;
+    border: 1px solid rgba(241, 231, 211, 0.16);
+    border-radius: 6px;
+    background: rgba(241, 231, 211, 0.05);
+  }
+  .theme-switch button {
+    border: none;
+    background: transparent;
+    color: rgba(241, 231, 211, 0.55);
+    font-family: var(--serif);
+    font-size: 13px;
+    letter-spacing: 2px;
+    padding: 7px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 180ms ease, color 180ms ease;
+  }
+  .theme-switch button.on {
+    background: #B4381F;
+    color: #FFF8EC;
+  }
+
+  /* ---------- 画布 ---------- */
+  .stage {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 30px;
+    padding: 34px 28px 80px;
+  }
+  .item { width: 375px; }
+  .item__label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 0 4px;
+  }
+  .item__label b {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 2px;
+    color: #F6EEDC;
+  }
+  .item__label span {
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: rgba(241, 231, 211, 0.4);
+  }
+  .device {
+    padding: 9px;
+    background: #0C0A08;
+    border: 1px solid rgba(241, 231, 211, 0.16);
+    border-radius: 40px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  }
+  .phone {
+    position: relative;
+    width: 375px;
+    height: 812px;
+    overflow: hidden;
+    border-radius: 32px;
+    background-color: var(--bg);
+    background-image: url("../assets/textures/paper-grain.png");
+    background-size: 160px 160px;
+    color: var(--ink);
+    font-family: var(--sans);
+  }
+  .screen { position: absolute; inset: 0; overflow: hidden; }
+
+  /* ---------- 通用 ---------- */
+  .serif { font-family: var(--serif); }
+  .num { font-family: var(--num); font-variant-numeric: tabular-nums; }
+  .band {
+    background: var(--band-bg);
+    color: var(--band-ink);
+  }
+  .seal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 2px;
+    background: var(--seal-bg);
+    color: var(--seal-ink);
+    font-family: var(--serif);
+    font-size: 14px;
+    line-height: 1;
+    letter-spacing: 0;
+    transform: rotate(-3deg);
+    box-shadow: inset 0 0 0 1px rgba(255, 248, 236, 0.22);
+  }
+  .seal.sm { width: 22px; height: 22px; font-size: 11px; }
+  .seal.lg { width: 40px; height: 40px; font-size: 20px; }
+  .seal.ghost {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    box-shadow: none;
+  }
+  .vlabel {
+    width: 1em;
+    font-family: var(--serif);
+    font-size: 12px;
+    line-height: 1.08;
+    letter-spacing: 3px;
+    word-break: break-all;
+    color: var(--ink-2);
+  }
+  .rule {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--line-strong) 12%, var(--line-strong) 88%, transparent);
+  }
+  .rule.ink { background: linear-gradient(90deg, transparent, var(--ink) 10%, var(--ink) 90%, transparent); opacity: .85; }
+  .chip {
+    display: inline-block;
+    padding: 2px 7px;
+    margin: 0 5px 4px 0;
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--ink-2);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+  }
+  .chip.accent { color: var(--accent); border-color: var(--accent); }
+  .slip {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: 3px;
+  }
+  .slip::before, .slip::after {
+    content: "";
+    position: absolute;
+    top: -6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line-strong);
+  }
+  .slip::before { left: 22px; }
+  .slip::after { right: 22px; }
+  .dash { border-top: 1px dashed var(--line-strong); }
+  .halo {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 42% 38%, var(--halo), transparent 68%),
+                radial-gradient(circle at 62% 64%, var(--accent-soft), transparent 62%);
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    padding: 0 20px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); }
+  .btn.ghost { border: 1px solid var(--line-strong); color: var(--ink); }
+  .btn.seal-btn {
+    background: var(--seal-bg);
+    color: var(--seal-ink);
+    font-family: var(--serif);
+    font-weight: 600;
+    letter-spacing: 3px;
+  }
+
+  /* ---------- 原生导航 mock ---------- */
+  .native {
+    display: flex;
+    align-items: center;
+    height: 88px;
+    padding: 44px 16px 0;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
+  }
+  .native.dark {
+    background: var(--band-bg);
+    border-bottom-color: rgba(246, 238, 220, 0.18);
+    color: var(--band-ink);
+  }
+  .native__back {
+    width: 22px;
+    height: 22px;
+    border-left: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+    opacity: .8;
+  }
+  .native__title {
+    flex: 1;
+    text-align: center;
+    margin-right: 22px;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+
+  /* ---------- 首页 ---------- */
+  .home { padding-bottom: 150px; }
+  .home__nav {
+    position: relative;
+    padding-top: 44px;
+    background: var(--band-bg);
+    color: var(--band-ink);
+  }
+  .home__nav::after {
+    content: "";
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 5px;
+    height: 1px;
+    background: rgba(246, 238, 220, 0.28);
+  }
+  .home__bar {
+    display: flex;
+    align-items: center;
+    height: 44px;
+    padding: 0 108px 0 16px; /* 右侧给微信胶囊留位 */
+  }
+  .home__bar .seal { margin-right: 12px; }
+  .home__brand {
+    font-family: var(--serif);
+    font-size: 18px;
+    letter-spacing: 3px;
+    color: var(--band-ink);
+    white-space: nowrap;
+  }
+  .capsule {
+    position: absolute;
+    top: 48px;
+    right: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    width: 87px;
+    height: 32px;
+    border: 1px solid rgba(246, 238, 220, 0.22);
+    border-radius: 16px;
+    background: rgba(246, 238, 220, 0.10);
+    color: var(--band-ink);
+    font-size: 14px;
+    letter-spacing: 2px;
+  }
+  .capsule i {
+    display: block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: .75;
+  }
+  .home__search {
+    display: flex;
+    align-items: center;
+    height: 54px;
+    padding: 0 12px 10px;
+  }
+  .search {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    height: 38px;
+    padding: 0 10px;
+    background: rgba(246, 238, 220, 0.06);
+    border: 1px solid rgba(246, 238, 220, 0.22);
+    border-radius: 3px;
+  }
+  .search__lens {
+    position: relative;
+    flex-shrink: 0;
+    width: 12px;
+    height: 12px;
+    margin-right: 9px;
+    border: 1.5px solid rgba(246, 238, 220, 0.62);
+    border-radius: 50%;
+  }
+  .search__lens::after {
+    content: "";
+    position: absolute;
+    right: -4px;
+    bottom: -3px;
+    width: 6px;
+    height: 1.5px;
+    background: rgba(246, 238, 220, 0.62);
+    transform: rotate(45deg);
+  }
+  .search__seal {
+    flex-shrink: 0;
+    margin-right: 8px;
+  }
+  .search__ph {
+    font-size: 12px;
+    color: rgba(246, 238, 220, 0.45);
+    letter-spacing: 1px;
+  }
+  .search__btn {
+    flex-shrink: 0;
+    margin-left: 8px;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--seal-bg);
+    color: var(--seal-ink);
+    font-family: var(--serif);
+    font-size: 14px;
+    border-radius: 3px;
+  }
+
+  .masthead {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    padding: 26px 18px 0;
+  }
+  .masthead__side {
+    flex-shrink: 0;
+    padding-top: 3px;
+    padding-right: 14px;
+  }
+  .masthead__main { flex: 1; min-width: 0; }
+  .masthead__kicker {
+    font-family: var(--serif);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--ink-3);
+  }
+  .masthead__title {
+    margin-top: 4px;
+    font-family: var(--serif);
+    font-size: 42px;
+    font-weight: 600;
+    line-height: 1.06;
+    letter-spacing: 3px;
+    color: var(--ink);
+  }
+  .masthead__title.indent { padding-left: 1.02em; }
+  .masthead__meta {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--ink-3);
+    letter-spacing: 1px;
+  }
+  .masthead__meta b {
+    font-family: var(--num);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink-2);
+  }
+  .masthead__seal {
+    flex-shrink: 0;
+    margin-left: 8px;
+    margin-top: 4px;
+  }
+
+  .hero {
+    position: relative;
+    margin: 20px 16px 0;
+    height: 178px;
+    overflow: hidden;
+    border: 1px solid var(--line-strong);
+    background:
+      radial-gradient(circle at 72% 20%, rgba(255, 240, 214, 0.30), transparent 42%),
+      radial-gradient(circle at 16% 84%, rgba(30, 16, 8, 0.55), transparent 58%),
+      linear-gradient(135deg, #6E2A19 0%, #A84528 48%, #D07A46 100%);
+  }
+  .hero::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 90px;
+    background: linear-gradient(180deg, transparent, rgba(15, 10, 6, 0.78));
+  }
+  .hero__v {
+    position: absolute;
+    top: 16px;
+    right: 14px;
+    z-index: 2;
+    writing-mode: vertical-rl;
+    font-family: var(--serif);
+    font-size: 12px;
+    letter-spacing: 4px;
+    color: rgba(255, 248, 236, 0.82);
+  }
+  .hero__foot {
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: 12px;
+    z-index: 2;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+  .hero__name {
+    font-family: var(--serif);
+    font-size: 24px;
+    letter-spacing: 2px;
+    color: #FFF8EC;
+  }
+  .hero__sub {
+    margin-top: 3px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(255, 248, 236, 0.65);
+  }
+  .hero__dots {
+    display: flex;
+    gap: 5px;
+    padding-bottom: 4px;
+  }
+  .hero__dots i {
+    display: block;
+    width: 10px;
+    height: 2px;
+    background: rgba(255, 248, 236, 0.35);
+  }
+  .hero__dots i.on { background: #FFF8EC; }
+
+  .cats {
+    display: flex;
+    gap: 8px;
+    padding: 16px 16px 0;
+    overflow: hidden;
+  }
+  .cat {
+    flex-shrink: 0;
+    padding: 7px 14px;
+    font-family: var(--serif);
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: var(--ink-2);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    position: relative;
+  }
+  .cat.on {
+    color: var(--seal-ink);
+    background: var(--seal-bg);
+    border-color: var(--seal-bg);
+    padding-left: 17px;
+    padding-right: 17px;
+  }
+  .listhead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 18px 18px 10px;
+  }
+  .listhead b {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 2px;
+  }
+  .listhead span {
+    font-family: var(--num);
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: 0 16px;
+  }
+  .dish {
+    position: relative;
+    width: 48.6%;
+    margin-bottom: 10px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .dish__img {
+    position: relative;
+    height: 150px;
+    background:
+      radial-gradient(circle at 70% 24%, rgba(255, 248, 236, 0.28), transparent 42%),
+      linear-gradient(140deg, #7C3320 0%, #B0522E 56%, #D9955B 100%);
+  }
+  .dish__img.alt {
+    background:
+      radial-gradient(circle at 30% 20%, rgba(255, 248, 236, 0.30), transparent 40%),
+      linear-gradient(140deg, #3E4D2B 0%, #6C7A3F 55%, #B7A65E 100%);
+  }
+  .dish__idx {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    padding: 3px 6px;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--num);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+  .dish__body {
+    padding: 10px;
+  }
+  .dish__name {
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    line-height: 1.3;
+  }
+  .dish__desc {
+    margin-top: 3px;
+    font-size: 10px;
+    color: var(--ink-3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dish__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+  }
+  .dish__tags {
+    flex: 1;
+    min-width: 0;
+    font-size: 10px;
+    color: var(--ink-3);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .want {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    margin-left: 4px;
+    border: 1px solid var(--seal-bg);
+    color: var(--seal-bg);
+    font-family: var(--serif);
+    font-size: 10px;
+    line-height: 1.1;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+
+  .cart {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 74px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    padding: 0 6px 0 12px;
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: 3px;
+  }
+  .cart::before, .cart::after {
+    content: "";
+    position: absolute;
+    top: -6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line-strong);
+  }
+  .cart::before { left: 24px; }
+  .cart::after { right: 24px; }
+  .cart__seal { margin-right: 9px; }
+  .cart__text {
+    flex: 1;
+    font-size: 13px;
+    color: var(--ink);
+    letter-spacing: .5px;
+  }
+  .cart__text b {
+    font-family: var(--num);
+    color: var(--accent);
+  }
+  .cart__go {
+    height: 40px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    background: var(--seal-bg);
+    color: var(--seal-ink);
+    font-family: var(--serif);
+    font-size: 13px;
+    letter-spacing: 2px;
+    border-radius: 2px;
+  }
+
+  .tabbar {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 10px;
+    height: 54px;
+    display: flex;
+    align-items: center;
+    background: var(--band-bg);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .tabbar::before {
+    content: "";
+    position: absolute;
+    left: 10px; right: 10px; top: 4px;
+    height: 1px;
+    background: rgba(246, 238, 220, 0.20);
+  }
+  .tabbar__mark {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 33.3333%;
+    background: var(--seal-bg);
+  }
+  .tabbar__mark::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -5px;
+    width: 10px;
+    height: 10px;
+    transform: translateX(-50%) rotate(45deg);
+    background: var(--seal-bg);
+  }
+  .tabbar__item {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    text-align: center;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: rgba(246, 238, 220, 0.48);
+    font-family: var(--serif);
+  }
+  .tabbar__item.on { color: var(--seal-ink); }
+
+  /* ---------- 详情 ---------- */
+  .detail__hero {
+    position: relative;
+    height: 218px;
+    background:
+      radial-gradient(circle at 74% 18%, rgba(255, 248, 236, 0.28), transparent 40%),
+      radial-gradient(circle at 18% 88%, rgba(20, 10, 6, 0.6), transparent 56%),
+      linear-gradient(140deg, #6A2A1A 0%, #A64426 50%, #CE8350 100%);
+  }
+  .plate {
+    position: relative;
+    margin: -52px 14px 0;
+    padding: 16px 16px 15px;
+    background: var(--band-bg);
+    color: var(--band-ink);
+    border-radius: 2px;
+  }
+  .plate__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+  .plate__kicker {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(246, 238, 220, 0.55);
+  }
+  .plate__name {
+    margin-top: 5px;
+    font-family: var(--serif);
+    font-size: 30px;
+    letter-spacing: 3px;
+    line-height: 1.2;
+  }
+  .plate__chef {
+    margin-top: 6px;
+    font-size: 11px;
+    color: rgba(246, 238, 220, 0.6);
+    letter-spacing: 1px;
+  }
+  .plate__tags {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .plate__tags .chip {
+    color: rgba(246, 238, 220, 0.72);
+    border-color: rgba(246, 238, 220, 0.25);
+  }
+  .sheet {
+    margin: 0 14px;
+    padding: 18px 16px 110px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-top: none;
+  }
+  .section {
+    display: flex;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .section:last-child { border-bottom: none; }
+  .section__side {
+    flex-shrink: 0;
+    width: 34px;
+    padding-top: 2px;
+  }
+  .section__main { flex: 1; min-width: 0; }
+  .section__text {
+    font-size: 13px;
+    line-height: 1.85;
+    color: var(--ink-2);
+  }
+  .ingredients {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .ingredient {
+    width: 50%;
+    display: flex;
+    align-items: center;
+    margin-bottom: 7px;
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .ingredient i {
+    width: 4px;
+    height: 4px;
+    margin-right: 7px;
+    background: var(--seal-bg);
+    transform: rotate(45deg);
+  }
+  .steps { }
+  .step {
+    position: relative;
+    display: flex;
+    padding-bottom: 14px;
+  }
+  .step:last-child { padding-bottom: 0; }
+  .step__no {
+    flex-shrink: 0;
+    width: 30px;
+    font-family: var(--num);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .step__text {
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--ink-2);
+  }
+  .note {
+    position: relative;
+    margin: 0 0 10px;
+    padding: 11px 12px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+  }
+  .note::before {
+    content: "";
+    position: absolute;
+    top: -4px;
+    left: 12px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--seal-bg);
+  }
+  .note__text {
+    font-size: 12px;
+    line-height: 1.75;
+    color: var(--ink-2);
+  }
+  .note__foot {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 7px;
+    font-size: 10px;
+    color: var(--ink-3);
+  }
+  .composer {
+    display: flex;
+    align-items: center;
+    margin-top: 4px;
+    padding: 7px 7px 7px 9px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+  }
+  .composer__ph {
+    flex: 1;
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .composer__send {
+    width: 34px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--seal-bg);
+    color: var(--seal-ink);
+    font-family: var(--serif);
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+  .detail__bar {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    background: var(--surface);
+    border-top: 1px dashed var(--line-strong);
+  }
+  .detail__bar .btn { flex: 1; height: 38px; }
+
+  /* ---------- 点菜单 ---------- */
+  .order .slip.big {
+    margin: 16px 14px 90px;
+    padding: 16px 16px 18px;
+  }
+  .slip__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--line-strong);
+  }
+  .slip__title {
+    font-family: var(--serif);
+    font-size: 24px;
+    letter-spacing: 3px;
+  }
+  .slip__meta {
+    margin-top: 4px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--ink-3);
+  }
+  .group { margin-top: 14px; }
+  .group__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--line);
+  }
+  .group__name {
+    font-family: var(--serif);
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+  .group__count {
+    font-family: var(--num);
+    font-size: 10px;
+    color: var(--ink-3);
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px dashed var(--line);
+  }
+  .row__no {
+    flex-shrink: 0;
+    width: 24px;
+    font-family: var(--num);
+    font-size: 11px;
+    color: var(--ink-3);
+  }
+  .row__thumb {
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    margin-right: 9px;
+    background: linear-gradient(135deg, #7C3320, #D9955B);
+  }
+  .row__name {
+    flex: 1;
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .row__rm {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--line-strong);
+    color: var(--ink-3);
+    font-family: var(--serif);
+    font-size: 11px;
+  }
+  .order__bar {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    background: var(--surface);
+    border-top: 1px dashed var(--line-strong);
+  }
+  .order__total {
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+  .order__total b {
+    font-family: var(--num);
+    font-size: 17px;
+    color: var(--accent);
+  }
+  .order__bar .btn { height: 40px; }
+
+  /* ---------- 灶房 ---------- */
+  .kitchen .phone { background-color: #11100D; }
+  .kitchen .screen {
+    --ink: #F1E7D3;
+    --ink-2: #BFB29B;
+    --ink-3: #8F836E;
+    --line: rgba(241, 231, 211, 0.11);
+    --line-strong: rgba(241, 231, 211, 0.26);
+    --surface: #1D1A14;
+    --surface-2: #26221A;
+    --accent: #D6543A;
+    --accent-ink: #171009;
+    --halo: rgba(241, 231, 211, 0.12);
+  }
+  .kitchen__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 16px 4px;
+  }
+  .kitchen__title {
+    font-family: var(--serif);
+    font-size: 30px;
+    letter-spacing: 5px;
+    color: var(--ink);
+  }
+  .kitchen__sub {
+    margin-top: 3px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--ink-3);
+  }
+  .kitchen__body { padding: 0 14px 24px; }
+  .kticket {
+    --ink: #1B1712;
+    --ink-2: #5E5346;
+    --ink-3: #7C7060;
+    --line: rgba(28, 23, 18, 0.12);
+    --line-strong: rgba(28, 23, 18, 0.30);
+    --surface: #F1E6D0;
+    --surface-2: #E6D9C1;
+    position: relative;
+    margin-top: 12px;
+    padding: 12px 13px;
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--line-strong);
+    border-left: 3px solid var(--seal-bg);
+    border-radius: 2px;
+  }
+  .kticket.read { border-left-color: transparent; opacity: .72; }
+  .kticket__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .kticket__diner {
+    font-family: var(--serif);
+    font-size: 14px;
+    letter-spacing: 1px;
+  }
+  .kticket__time {
+    font-family: var(--num);
+    font-size: 10px;
+    color: var(--ink-3);
+  }
+  .kticket__dishes {
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--ink-2);
+  }
+  .kticket__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 9px;
+  }
+  .kticket__status {
+    font-size: 10px;
+    color: var(--ink-3);
+    letter-spacing: 1px;
+  }
+  .stampbtn {
+    padding: 5px 10px;
+    background: var(--seal-bg);
+    color: var(--seal-ink);
+    font-family: var(--serif);
+    font-size: 11px;
+    letter-spacing: 2px;
+    border-radius: 2px;
+  }
+  .cookrow {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: 2px;
+  }
+  .cookrow__check {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--line-strong);
+    color: var(--seal-ink);
+    font-size: 14px;
+  }
+  .cookrow__check.on {
+    background: var(--seal-bg);
+    border-color: var(--seal-bg);
+  }
+  .cookrow__body { flex: 1; min-width: 0; }
+  .cookrow__name {
+    font-family: var(--serif);
+    font-size: 14px;
+    letter-spacing: 1px;
+  }
+  .cookrow.done .cookrow__name {
+    text-decoration: line-through;
+    color: var(--ink-3);
+  }
+  .cookrow__meta {
+    margin-top: 2px;
+    font-size: 10px;
+    color: var(--ink-3);
+  }
+  .cookrow__rm {
+    font-size: 10px;
+    color: var(--ink-3);
+    padding: 6px;
+  }
+  .kitchen__divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 22px 2px 2px;
+    font-family: var(--serif);
+    font-size: 14px;
+    letter-spacing: 3px;
+    color: var(--ink-2);
+  }
+  .kitchen__divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--line-strong), transparent);
+  }
+
+  /* ---------- 档案 ---------- */
+  .archive {
+    margin: 16px 14px 0;
+    padding: 15px 15px 16px;
+    background: var(--band-bg);
+    color: var(--band-ink);
+    border-radius: 2px;
+  }
+  .archive__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .archive__label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: rgba(246, 238, 220, 0.55);
+  }
+  .archive__body {
+    display: flex;
+    align-items: center;
+    margin-top: 14px;
+  }
+  .avatar {
+    position: relative;
+    width: 58px;
+    height: 58px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(246, 238, 220, 0.10);
+    border: 1px solid rgba(246, 238, 220, 0.22);
+    font-family: var(--serif);
+    font-size: 26px;
+    color: var(--band-ink);
+  }
+  .avatar .seal {
+    position: absolute;
+    right: -6px;
+    bottom: -2px;
+  }
+  .archive__info {
+    flex: 1;
+    min-width: 0;
+    margin-left: 15px;
+  }
+  .archive__name {
+    font-family: var(--serif);
+    font-size: 26px;
+    letter-spacing: 2px;
+  }
+  .archive__meta {
+    margin-top: 5px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: rgba(246, 238, 220, 0.6);
+  }
+  .stats {
+    display: flex;
+    align-items: center;
+    margin: 14px 14px 0;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .stat {
+    flex: 1;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 7px;
+  }
+  .stat b {
+    font-family: var(--num);
+    font-size: 30px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .stat span {
+    font-family: var(--serif);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--ink-3);
+  }
+  .stats__rule { width: 1px; height: 26px; background: var(--line); }
+  .panel {
+    margin: 14px 14px 0;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+  }
+  .prow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .prow:last-child { border-bottom: none; }
+  .prow__label {
+    font-family: var(--serif);
+    font-size: 14px;
+    letter-spacing: 1px;
+  }
+  .prow__desc {
+    margin-top: 3px;
+    font-size: 10px;
+    color: var(--ink-3);
+  }
+  .dayswitch {
+    display: flex;
+    align-items: center;
+    width: 76px;
+    height: 30px;
+    padding: 2px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+  }
+  .dayswitch i {
+    flex: 1;
+    text-align: center;
+    font-family: var(--serif);
+    font-size: 11px;
+    line-height: 24px;
+    color: var(--ink-3);
+    font-style: normal;
+  }
+  .dayswitch i.on {
+    background: var(--seal-bg);
+    color: var(--seal-ink);
+  }
+  .ledger {
+    margin: 14px 14px 0;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+  }
+  .lrow {
+    display: flex;
+    align-items: center;
+    padding: 13px 14px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .lrow:last-child { border-bottom: none; }
+  .lrow__diamond {
+    width: 5px;
+    height: 5px;
+    margin-right: 10px;
+    background: var(--seal-bg);
+    transform: rotate(45deg);
+    flex-shrink: 0;
+  }
+  .lrow__body { flex: 1; min-width: 0; }
+  .lrow__title {
+    font-size: 13px;
+    letter-spacing: .5px;
+    color: var(--ink);
+  }
+  .lrow__desc {
+    margin-top: 2px;
+    font-size: 10px;
+    color: var(--ink-3);
+  }
+  .lrow__chev {
+    width: 7px;
+    height: 7px;
+    border-top: 1px solid var(--ink-3);
+    border-right: 1px solid var(--ink-3);
+    transform: rotate(45deg);
+  }
+  .about {
+    margin: 24px 0 0;
+    text-align: center;
+    font-size: 10px;
+    line-height: 2;
+    color: var(--ink-3);
+    letter-spacing: 1px;
+  }
+  .about .seal { margin-bottom: 6px; }
+
+  /* ---------- 组件页 ---------- */
+  .kit { padding: 20px 16px; }
+  .kit h4 {
+    margin: 18px 0 8px;
+    font-family: var(--serif);
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--ink-2);
+    font-weight: 600;
+  }
+  .kit h4:first-child { margin-top: 0; }
+  .kit__row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .kit__band {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: var(--band-bg);
+    color: var(--band-ink);
+  }
+  .kit__band b {
+    font-family: var(--serif);
+    font-size: 16px;
+    letter-spacing: 3px;
+    font-weight: 600;
+  }
+  .kit__type div {
+    font-family: var(--serif);
+    color: var(--ink);
+  }
+  .kit__type .t1 { font-size: 36px; letter-spacing: 2px; }
+  .kit__type .t2 { font-size: 24px; letter-spacing: 2px; }
+  .kit__type .t3 { font-size: 16px; letter-spacing: 1px; }
+  .kit__type .t4 { font-size: 13px; color: var(--ink-2); font-family: var(--sans); }
+  .kit__ticket {
+    position: relative;
+    margin-top: 8px;
+    padding: 12px;
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+  }
+  .kit__ticket::before, .kit__ticket::after {
+    content: "";
+    position: absolute;
+    top: -6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line-strong);
+  }
+  .kit__ticket::before { left: 22px; }
+  .kit__ticket::after { right: 22px; }
+  .kit__ticket .dashline {
+    margin: 8px 0;
+    border-top: 1px dashed var(--line-strong);
+  }
+  .kit__note {
+    margin-top: 8px;
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--ink-3);
+  }
+
+  /* ---------- v3.1 圆角校准：纸笺更圆润 ---------- */
+  .seal { border-radius: 5px; }
+  .seal.sm { border-radius: 4px; }
+  .seal.lg { border-radius: 7px; }
+  .search, .search__btn, .cat, .chip, .dayswitch, .want { border-radius: 8px; }
+  .dayswitch i { border-radius: 4px; }
+  .dish, .hero, .plate, .note, .panel, .ledger, .slip, .btn, .tabbar, .cart,
+  .kticket, .cookrow, .composer, .kit__band, .kit__ticket, .kit__ticket::before,
+  .kit__ticket::after { border-radius: 12px; }
+  .sheet { border-radius: 0 0 12px 12px; }
+  .archive { border-radius: 14px; }
+  .home__nav { border-radius: 0 0 14px 14px; }
+  .row__thumb, .row__rm, .cookrow__check, .stampbtn { border-radius: 6px; }
+  .image-cell, .image-add { border-radius: 8px; }
+  .submit-bar .btn { border-radius: 10px; }
+  .tabbar__mark { border-radius: 10px 0 0 10px; }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="toolbar__brand">
+    <span class="toolbar__title">坤坤食帖</span>
+    <span class="toolbar__sub">VISUAL PREVIEW v3 · 国潮食帖</span>
+  </div>
+  <div class="theme-switch">
+    <button id="btnPaper" class="on" onclick="setTheme('paper')">宣纸</button>
+    <button id="btnInk" onclick="setTheme('ink')">墨夜</button>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ============ 首页 ============ -->
+  <div class="item">
+    <div class="item__label"><b>首页 · 食帖目录</b><span>HOME / 375×812</span></div>
+    <div class="device"><div class="phone">
+      <div class="screen home">
+
+        <div class="home__nav">
+          <div class="home__bar">
+            <span class="seal">日</span>
+            <span class="home__brand">坤坤食帖</span>
+          </div>
+          <div class="capsule"><i></i><i></i><i></i><span>◎</span></div>
+          <div class="home__search">
+            <div class="search">
+              <span class="search__lens"></span>
+              <span class="search__ph">寻味：菜名 / 食材 / 口味</span>
+            </div>
+            <div class="search__btn">寻</div>
+          </div>
+        </div>
+
+        <div class="masthead">
+          <div class="masthead__side"><div class="vlabel">今日食帖</div></div>
+          <div class="masthead__main">
+            <div class="masthead__kicker">灶火正旺 · 今日</div>
+            <div class="masthead__title">今天</div>
+            <div class="masthead__title indent">吃什么</div>
+            <div class="masthead__meta"><b>12</b><span>道菜</span><span>·</span><span>现点现炒</span></div>
+          </div>
+          <span class="seal lg masthead__seal">坤</span>
+        </div>
+
+        <div class="hero">
+          <div class="hero__v">今日灶火</div>
+          <div class="hero__foot">
+            <div>
+              <div class="hero__name">红烧肉</div>
+              <div class="hero__sub">镬气推荐 · 掌勺 阿坤</div>
+            </div>
+            <div class="hero__dots"><i class="on"></i><i></i><i></i></div>
+          </div>
+        </div>
+
+        <div class="cats">
+          <div class="cat on">全席</div>
+          <div class="cat">热炒</div>
+          <div class="cat">汤羹</div>
+          <div class="cat">素斋</div>
+          <div class="cat">面点</div>
+        </div>
+
+        <div class="listhead"><b>全部菜牌</b><span>12 道</span></div>
+
+        <div class="grid">
+          <div class="dish">
+            <div class="dish__img"><span class="dish__idx">01</span></div>
+            <div class="dish__body">
+              <div class="dish__name">红烧肉</div>
+              <div class="dish__desc">慢火收汁，肥而不腻</div>
+              <div class="dish__foot">
+                <div class="dish__tags">家常 · 下饭</div>
+                <div class="want">想吃</div>
+              </div>
+            </div>
+          </div>
+          <div class="dish">
+            <div class="dish__img alt"><span class="dish__idx">02</span></div>
+            <div class="dish__body">
+              <div class="dish__name">番茄炒蛋</div>
+              <div class="dish__desc">酸甜正好，趁热吃</div>
+              <div class="dish__foot">
+                <div class="dish__tags">快手 · 家常</div>
+                <div class="want">想吃</div>
+              </div>
+            </div>
+          </div>
+          <div class="dish">
+            <div class="dish__img alt"><span class="dish__idx">03</span></div>
+            <div class="dish__body">
+              <div class="dish__name">清炒时蔬</div>
+              <div class="dish__desc">今日菜市新到</div>
+              <div class="dish__foot">
+                <div class="dish__tags">素斋 · 清爽</div>
+                <div class="want">想吃</div>
+              </div>
+            </div>
+          </div>
+          <div class="dish">
+            <div class="dish__img"><span class="dish__idx">04</span></div>
+            <div class="dish__body">
+              <div class="dish__name">莲藕排骨汤</div>
+              <div class="dish__desc">小火慢煨两个时辰</div>
+              <div class="dish__foot">
+                <div class="dish__tags">汤羹 · 滋补</div>
+                <div class="want">想吃</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cart">
+          <span class="seal sm cart__seal">单</span>
+          <span class="cart__text">点菜单 · <b>3</b> 道</span>
+          <span class="cart__go">去落单</span>
+        </div>
+
+        <div class="tabbar">
+          <div class="tabbar__mark"></div>
+          <div class="tabbar__item on">首页</div>
+          <div class="tabbar__item">留言</div>
+          <div class="tabbar__item">档案</div>
+        </div>
+
+      </div></div></div>
+  </div>
+
+  <!-- ============ 详情 ============ -->
+  <div class="item">
+    <div class="item__label"><b>菜之一页 · 详情</b><span>DETAIL / 375×812</span></div>
+    <div class="device"><div class="phone">
+      <div class="screen">
+        <div class="native">
+          <span class="native__back"></span>
+          <span class="native__title">菜之一页</span>
+        </div>
+        <div class="detail__hero"></div>
+        <div class="plate">
+          <div class="plate__top">
+            <div>
+              <div class="plate__kicker">今日 · 一菜</div>
+              <div class="plate__name">红烧肉</div>
+              <div class="plate__chef">掌勺 · 阿坤</div>
+            </div>
+            <span class="seal">坤</span>
+          </div>
+          <div class="plate__tags">
+            <span class="chip">家常</span><span class="chip">下饭</span><span class="chip">慢火</span>
+          </div>
+        </div>
+        <div class="sheet">
+          <div class="section">
+            <div class="section__side"><div class="vlabel">简介</div></div>
+            <div class="section__main">
+              <div class="section__text">五花三层，先煸后炖。糖色亮而不苦，收汁到挂在肉上，配一碗白饭正好。</div>
+            </div>
+          </div>
+          <div class="section">
+            <div class="section__side"><div class="vlabel">食材</div></div>
+            <div class="section__main">
+              <div class="ingredients">
+                <div class="ingredient"><i></i>五花肉</div>
+                <div class="ingredient"><i></i>冰糖</div>
+                <div class="ingredient"><i></i>生抽</div>
+                <div class="ingredient"><i></i>老抽</div>
+                <div class="ingredient"><i></i>姜片</div>
+                <div class="ingredient"><i></i>八角</div>
+              </div>
+            </div>
+          </div>
+          <div class="section">
+            <div class="section__side"><div class="vlabel">做法</div></div>
+            <div class="section__main">
+              <div class="steps">
+                <div class="step"><span class="step__no">01</span><span class="step__text">五花肉切块，冷水下锅焯去浮沫，捞出擦干。</span></div>
+                <div class="step"><span class="step__no">02</span><span class="step__text">小火炒糖色，肉块下锅翻匀，加姜片与八角。</span></div>
+                <div class="step"><span class="step__no">03</span><span class="step__text">加热水没过肉，转小火炖一个时辰，大火收汁。</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="section">
+            <div class="section__side"><div class="vlabel">留言</div></div>
+            <div class="section__main">
+              <div class="note">
+                <div class="note__text">今天的糖色炒得刚好，肥肉入口就化了。</div>
+                <div class="note__foot"><span>关于「红烧肉」</span><span>昨天</span></div>
+              </div>
+              <div class="composer">
+                <span class="composer__ph">写下这次的心得</span>
+                <span class="composer__send">发送</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="detail__bar">
+          <span class="btn ghost">删除</span>
+          <span class="btn seal-btn">编辑菜品</span>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ============ 点菜单 ============ -->
+  <div class="item">
+    <div class="item__label"><b>点菜单 · 落单</b><span>ORDER SLIP / 375×812</span></div>
+    <div class="device"><div class="phone">
+      <div class="screen order">
+        <div class="native">
+          <span class="native__back"></span>
+          <span class="native__title">点菜单</span>
+        </div>
+        <div class="slip big">
+          <div class="slip__head">
+            <div>
+              <div class="slip__title">点菜单</div>
+              <div class="slip__meta">坤坤食帖 · 今日</div>
+            </div>
+            <span class="seal">待</span>
+          </div>
+          <div class="group">
+            <div class="group__head"><span class="group__name">灶口 · 阿坤</span><span class="group__count">3 道</span></div>
+            <div class="row">
+              <span class="row__no">01</span>
+              <span class="row__thumb"></span>
+              <span class="row__name">红烧肉</span>
+              <span class="row__rm">撤</span>
+            </div>
+            <div class="row">
+              <span class="row__no">02</span>
+              <span class="row__thumb" style="background:linear-gradient(135deg,#3E4D2B,#B7A65E)"></span>
+              <span class="row__name">番茄炒蛋</span>
+              <span class="row__rm">撤</span>
+            </div>
+            <div class="row">
+              <span class="row__no">03</span>
+              <span class="row__thumb" style="background:linear-gradient(135deg,#3E4D2B,#6C7A3F)"></span>
+              <span class="row__name">清炒时蔬</span>
+              <span class="row__rm">撤</span>
+            </div>
+          </div>
+          <div class="group">
+            <div class="group__head"><span class="group__name">灶口 · 小满</span><span class="group__count">1 道</span></div>
+            <div class="row">
+              <span class="row__no">04</span>
+              <span class="row__thumb" style="background:linear-gradient(135deg,#6E2A19,#D07A46)"></span>
+              <span class="row__name">莲藕排骨汤</span>
+              <span class="row__rm">撤</span>
+            </div>
+          </div>
+        </div>
+        <div class="order__bar">
+          <span class="order__total"><b>4</b> 道菜</span>
+          <span class="btn seal-btn">盖章落单</span>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ============ 灶房 ============ -->
+  <div class="item kitchen">
+    <div class="item__label"><b>灶房 · 常暗</b><span>KITCHEN BOARD / 375×812</span></div>
+    <div class="device"><div class="phone">
+      <div class="screen">
+        <div class="native dark">
+          <span class="native__back"></span>
+          <span class="native__title">灶房</span>
+        </div>
+        <div class="kitchen__head">
+          <div>
+            <div class="kitchen__title">灶房</div>
+            <div class="kitchen__sub">今日 · 2 条未读飞帖</div>
+          </div>
+          <span class="seal lg">掌</span>
+        </div>
+        <div class="kitchen__body">
+          <div class="kticket">
+            <div class="kticket__top"><span class="kticket__diner">阿坤 的报餐</span><span class="kticket__time">刚刚</span></div>
+            <div class="kticket__dishes">红烧肉、番茄炒蛋、清炒时蔬</div>
+            <div class="kticket__foot"><span class="kticket__status">订单待处理</span><span class="stampbtn">加入制作</span></div>
+          </div>
+          <div class="kticket read">
+            <div class="kticket__top"><span class="kticket__diner">小满 的报餐</span><span class="kticket__time">12 分钟前</span></div>
+            <div class="kticket__dishes">莲藕排骨汤</div>
+            <div class="kticket__foot"><span class="kticket__status">已加入制作</span><span class="stampbtn" style="opacity:.5">加入制作</span></div>
+          </div>
+
+          <div class="kitchen__divider">在灶</div>
+
+          <div class="cookrow">
+            <span class="cookrow__check">✓</span>
+            <div class="cookrow__body">
+              <div class="cookrow__name">红烧肉</div>
+              <div class="cookrow__meta">阿坤 点的 · 8 分钟前</div>
+            </div>
+            <span class="cookrow__rm">撤</span>
+          </div>
+          <div class="cookrow done">
+            <span class="cookrow__check on">✓</span>
+            <div class="cookrow__body">
+              <div class="cookrow__name">清炒时蔬</div>
+              <div class="cookrow__meta">阿坤 点的 · 8 分钟前</div>
+            </div>
+            <span class="cookrow__rm">撤</span>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ============ 档案 ============ -->
+  <div class="item">
+    <div class="item__label"><b>食客档案 · 我的</b><span>PROFILE / 375×812</span></div>
+    <div class="device"><div class="phone">
+      <div class="screen">
+        <div class="native">
+          <span class="native__back"></span>
+          <span class="native__title">档案</span>
+        </div>
+        <div class="archive">
+          <div class="archive__top">
+            <span class="archive__label">坤坤食帖 · 食客档案</span>
+          </div>
+          <div class="archive__body">
+            <div class="avatar">坤<span class="seal sm">食</span></div>
+            <div class="archive__info">
+              <div class="archive__name">阿坤</div>
+              <div class="archive__meta">食客 · 记录每一道拿手菜</div>
+            </div>
+          </div>
+        </div>
+        <div class="stats">
+          <div class="stat"><b>12</b><span>菜品</span></div>
+          <div class="stats__rule"></div>
+          <div class="stat"><b>36</b><span>标签</span></div>
+        </div>
+        <div class="panel">
+          <div class="prow">
+            <div>
+              <div class="prow__label">主题</div>
+              <div class="prow__desc">日间宣纸 / 灯下墨夜</div>
+            </div>
+            <div class="dayswitch"><i class="on">日</i><i>月</i></div>
+          </div>
+          <div class="prow">
+            <div>
+              <div class="prow__label">减弱动效</div>
+              <div class="prow__desc">去掉位移与弹性，只保留淡入</div>
+            </div>
+            <div class="dayswitch" style="width:56px"><i>开</i><i class="on">关</i></div>
+          </div>
+        </div>
+        <div class="ledger">
+          <div class="lrow"><i class="lrow__diamond"></i><div class="lrow__body"><div class="lrow__title">我的食单</div><div class="lrow__desc">报餐单与制作状态</div></div><span class="lrow__chev"></span></div>
+          <div class="lrow"><i class="lrow__diamond"></i><div class="lrow__body"><div class="lrow__title">灶房</div><div class="lrow__desc">飞帖与在灶单</div></div><span class="lrow__chev"></span></div>
+          <div class="lrow"><i class="lrow__diamond"></i><div class="lrow__body"><div class="lrow__title">海报墙</div><div class="lrow__desc">首页顶部轮播</div></div><span class="lrow__chev"></span></div>
+        </div>
+        <div class="about">
+          <div><span class="seal sm">坤</span></div>
+          坤坤食帖 · 云开发版<br />数据存储于腾讯云开发 CloudBase
+        </div>
+      </div></div></div>
+  </div>
+
+  <!-- ============ 组件 ============ -->
+  <div class="item">
+    <div class="item__label"><b>组件与字阶</b><span>KIT / 375×812</span></div>
+    <div class="device"><div class="phone">
+      <div class="screen">
+        <div class="native"><span class="native__back"></span><span class="native__title">食帖组件</span></div>
+        <div class="kit">
+          <h4>书眉</h4>
+          <div class="kit__band"><b>食客档案</b><span class="seal sm">坤</span></div>
+          <h4>印章</h4>
+          <div class="kit__row">
+            <span class="seal">食</span>
+            <span class="seal sm">候</span>
+            <span class="seal ghost">撤</span>
+            <span class="seal lg">掌</span>
+          </div>
+          <h4>按钮</h4>
+          <div class="kit__row">
+            <span class="btn primary">盖章落单</span>
+            <span class="btn ghost">取消订单</span>
+            <span class="btn seal-btn">挂上菜单</span>
+          </div>
+          <h4>食单小票</h4>
+          <div class="kit__ticket">
+            <div style="font-family:var(--serif);font-size:15px;letter-spacing:2px;">点菜单 · 待落单</div>
+            <div class="dashline"></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);">
+              <span>红烧肉</span><span class="num">01</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-top:5px;">
+              <span>番茄炒蛋</span><span class="num">02</span>
+            </div>
+          </div>
+          <h4>字阶</h4>
+          <div class="kit__type">
+            <div class="t1">今天吃什么</div>
+            <div class="t2">食客档案</div>
+            <div class="t3">红烧肉 · 慢火收汁</div>
+            <div class="t4">正文与说明文字，保持 1.7 倍行高，长文不累。</div>
+          </div>
+          <h4>标签</h4>
+          <div class="kit__row">
+            <span class="chip">家常</span><span class="chip">下饭</span><span class="chip accent">镬气推荐</span>
+          </div>
+          <div class="kit__note">朱砂只承担“落印/选中/结果”三种语义；墨带负责分区；纸纹只做底，不抢内容。</div>
+        </div>
+      </div></div></div>
+  </div>
+
+</div>
+
+<script>
+  function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.getElementById('btnPaper').classList.toggle('on', theme === 'paper');
+    document.getElementById('btnInk').classList.toggle('on', theme === 'ink');
+  }
+</script>
+</body>
+</html>

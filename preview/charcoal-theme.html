@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>坤坤食帖 · 墨黑主题预览</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #101010; color: #f0ede6; font-family: "Microsoft YaHei", sans-serif; }
+    main { width: 1261px; padding: 24px 16px 16px; margin: auto; }
+    header { display: flex; justify-content: space-between; align-items: baseline; padding: 0 10px 22px; }
+    h1 { font-family: "Songti SC", "SimSun", serif; font-size: 26px; font-weight: 400; letter-spacing: 4px; margin: 0; }
+    header p { margin: 0; font-size: 12px; color: #aaa49b; }
+    .pages { display: grid; grid-template-columns: repeat(3, 399px); gap: 16px; }
+    iframe { display: block; width: 399px; height: 836px; border: 0; border-radius: 47px; box-shadow: 0 16px 35px #0004; }
+    .caption { text-align: center; font-size: 12px; letter-spacing: 2px; color: #c7c1b7; margin: 18px 0 0; }
+  </style>
+</head>
+<body>
+  <main>
+    <header><h1>坤坤食帖 · 墨黑</h1><p>炭黑底色 · 暖灰层次 · 米白文字 / 浏览器预览</p></header>
+    <div class="pages">
+      <section><iframe id="charcoal-home" title="墨黑首页" src="ink-preview.html?embed=1&amp;page=list&amp;theme=ink&amp;reduce=1"></iframe><p class="caption">寻味 · 山水留白与米白题字</p></section>
+      <section><iframe id="charcoal-comments" title="墨黑食话" src="ink-preview.html?embed=1&amp;page=comments&amp;theme=ink&amp;reduce=1"></iframe><p class="caption">食话 · 暖灰札记与柔和正文</p></section>
+      <section><iframe id="charcoal-my" title="墨黑小院" src="ink-preview.html?embed=1&amp;page=my&amp;theme=ink&amp;reduce=1"></iframe><p class="caption">小院 · 炭灰卡片与细线层次</p></section>
+    </div>
+  </main>
+</body>
+</html>
